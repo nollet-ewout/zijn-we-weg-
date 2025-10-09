@@ -1,46 +1,33 @@
-from flask import Flask, render_template_string, request, redirect, url_for
+import streamlit as st
 from github import Github
 import base64
 import csv
 import io
+import os
+from dotenv import load_dotenv
 
-app = Flask(__name__)
+load_dotenv()
 
-# GitHub setup
-GITHUB_TOKEN = "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"
+# Haal GitHub token en repo info uit environment variables
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 REPO_NAME = "nollet-ewout/zijn-we-weg-"
 CSV_PATH = "reislocatie_filter.csv"
 
+# Initialize GitHub client
 g = Github(GITHUB_TOKEN)
 repo = g.get_repo(REPO_NAME)
 
-# HTML template met één vraag per pagina (bijvoorbeeld locatie naam)
-form_template = """
-<!doctype html>
-<title>Nieuwe locatie toevoegen</title>
-<h2>Voer gegevens locatie in</h2>
-<form method=post>
-  <label>Naam locatie:</label>
-  <input type=text name=naam required>
-  <br><br>
-  <label>Adres:</label>
-  <input type=text name=adres required>
-  <br><br>
-  <label>Beschrijving:</label>
-  <input type=text name=beschrijving required>
-  <br><br>
-  <input type=submit value=Opslaan>
-</form>
-"""
+st.title("Nieuwe locatie toevoegen")
 
-@app.route("/nieuw", methods=["GET", "POST"])
-def nieuw():
-    if request.method == "POST":
-        naam = request.form['naam']
-        adres = request.form['adres']
-        beschrijving = request.form['beschrijving']
+with st.form("locatie_form"):
+    naam = st.text_input("Naam locatie")
+    adres = st.text_input("Adres")
+    beschrijving = st.text_area("Beschrijving")
+    submitted = st.form_submit_button("Opslaan")
 
-        # Lees huidige CSV uit GitHub
+if submitted:
+    try:
+        # Lees het CSV bestand uit GitHub
         contents = repo.get_contents(CSV_PATH)
         csv_data = base64.b64decode(contents.content).decode('utf-8')
 
@@ -55,7 +42,7 @@ def nieuw():
         writer.writerows(reader)
         updated_csv = output.getvalue()
 
-        # Update bestand op GitHub
+        # Update het bestand op GitHub
         repo.update_file(
             path=CSV_PATH,
             message=f"Toevoegen locatie: {naam}",
@@ -63,11 +50,6 @@ def nieuw():
             sha=contents.sha,
             branch="main"  # Pas aan indien nodig
         )
-
-        return redirect(url_for('nieuw'))
-
-    return render_template_string(form_template)
-
-
-#if __name__ == "__main__":
-#    app.run(debug=True)
+        st.success(f"Locatie '{naam}' succesvol toegevoegd aan GitHub CSV!")
+    except Exception as e:
+        st.error(f"Er is een fout opgetreden: {e}")
