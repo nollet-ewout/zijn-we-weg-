@@ -29,7 +29,12 @@ filtered_data = data[
 st.write("### Geselecteerde locaties:")
 if not filtered_data.empty:
     for _, row in filtered_data.iterrows():
-        st.write(f"- {row['Land / Regio']}: {row['Opmerking']}")
+        naam = row['Land / Regio']
+        url = row['URL']
+        # Maak klikbare link als URL aanwezig is, anders normaal tekst
+        if pd.notna(url) and url.strip() != '':
+            st.markdown(f"- [{naam}]({url}) : {row['Opmerking']}")
+        else:
+            st.write(f"- {naam}: {row['Opmerking']}")
 else:
     st.write("Geen locaties gevonden.")
-
