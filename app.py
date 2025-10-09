@@ -10,8 +10,6 @@ def load_data():
 
 data = load_data()
 
-st.write(data.columns)  # om te debuggen welke kolomnamen er zijn
-
 st.title("Ideale Reislocatie Zoeker")
 
 # Filters
@@ -41,3 +39,4 @@ if not filtered_data.empty:
             st.write(f"- {naam}: {row['Opmerking']}")
 else:
     st.write("Geen locaties gevonden.")
+
