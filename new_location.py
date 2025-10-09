@@ -7,7 +7,7 @@ import io
 app = Flask(__name__)
 
 # GitHub setup
-GITHUB_TOKEN = "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"
+GITHUB_TOKEN = "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"
 REPO_NAME = "nollet-ewout/zijn-we-weg-"
 CSV_PATH = "reislocatie_filter.csv"
 
