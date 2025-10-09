@@ -8,48 +8,69 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Haal GitHub token en repo info uit environment variables
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 REPO_NAME = "nollet-ewout/zijn-we-weg-"
 CSV_PATH = "reislocatie_filter.csv"
 
-# Initialize GitHub client
 g = Github(GITHUB_TOKEN)
 repo = g.get_repo(REPO_NAME)
 
 st.title("Nieuwe locatie toevoegen")
 
 with st.form("locatie_form"):
-    naam = st.text_input("Naam locatie")
-    adres = st.text_input("Adres")
-    beschrijving = st.text_area("Beschrijving")
+    land_regio = st.text_input("Land / Regio")
+    duur = st.text_input("Duur")
+    bestemming = st.text_input("Bestemming")
+    reistype = st.text_input("Reistype / Doel")
+    seizoen = st.text_input("Seizoen")
+    budget = st.text_input("Budget")
+    accommodatie = st.text_input("Accommodatie")
+    opmerking = st.text_area("Opmerking")
+    url = st.text_input("URL")
     submitted = st.form_submit_button("Opslaan")
 
 if submitted:
     try:
-        # Lees het CSV bestand uit GitHub
         contents = repo.get_contents(CSV_PATH)
         csv_data = base64.b64decode(contents.content).decode('utf-8')
 
-        # Voeg nieuwe rij toe
         f = io.StringIO(csv_data)
         reader = list(csv.reader(f))
-        reader.append([naam, adres, beschrijving])
 
-        # Schrijf terug naar CSV string
+        # Bepaal nieuw ID op basis van laatste rij
+        if len(reader) > 1:
+            laatste_id = int(reader[-1][0])
+        else:
+            laatste_id = 0
+        nieuw_id = laatste_id + 1
+
+        # Voeg nieuwe rij toe met ID en alle velden
+        nieuwe_rij = [
+            str(nieuw_id),
+            land_regio,
+            duur,
+            bestemming,
+            reistype,
+            seizoen,
+            budget,
+            accommodatie,
+            opmerking,
+            url
+        ]
+        reader.append(nieuwe_rij)
+
         output = io.StringIO()
         writer = csv.writer(output)
         writer.writerows(reader)
         updated_csv = output.getvalue()
 
-        # Update het bestand op GitHub
         repo.update_file(
             path=CSV_PATH,
-            message=f"Toevoegen locatie: {naam}",
+            message=f"Toevoegen locatie ID {nieuw_id}",
             content=updated_csv,
             sha=contents.sha,
-            branch="main"  # Pas aan indien nodig
+            branch="main"
         )
-        st.success(f"Locatie '{naam}' succesvol toegevoegd aan GitHub CSV!")
+        st.success(f"Locatie met ID {nieuw_id} succesvol toegevoegd!")
     except Exception as e:
-        st.error(f"Er is een fout opgetreden: {e}")
+        st.error(f"Fout bij toevoegen locatie: {e}")
