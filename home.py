@@ -16,7 +16,7 @@ button_html = f"""
       cursor: pointer;
       font-weight: bold;
       box-shadow: 0 4px 8px rgba(0, 123, 255, 0.4);
-  ">Applicatie 1</a>
+  ">Reis zoeken</a>
 
   <a href="https://zijnweweg-nieuwe-locatie.streamlit.app/" target="_blank" style="
       background-color: #007BFF; 
@@ -30,7 +30,7 @@ button_html = f"""
       cursor: pointer;
       font-weight: bold;
       box-shadow: 0 4px 8px rgba(0, 123, 255, 0.4);
-  ">Applicatie 2</a>
+  ">Nieuwe reis toevoegen</a>
 </div>
 """
 
