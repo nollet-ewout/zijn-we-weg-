@@ -1,10 +1,11 @@
 ID,Land / Regio,Minimum Duur,Maximum Duur,Bestemming,Reistype / Doel,Seizoen,Budget,Accommodatie,Opmerking,URL
 1,Italië,5,8,Europa,Roadtrip,Zomer,1200,Hotel,Mooie wijnstreek,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
-2,Japan,10,100,Azië,Roadtrip,Lente,2500,Hostel,Sakura bloesem,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
-3,Zuid-Frankrijk,10,100,Europa,Rust,Zomer,1400,Vakantiehuis,Nabij strand,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
+2,Japan,10,20,Azië,Roadtrip,Lente,2500,Hostel,Sakura bloesem,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
+3,Zuid-Frankrijk,7,15,Europa,Rust,Zomer,1400,Vakantiehuis,Nabij strand,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
 4,IJsland,4,8,Europa,Wandelen,Herfst,1700,Guesthouse,Veel watervallen,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
-5,USA,10,100,Amerika,Citytrip,Winter,2600,Hotel,New York bezoeken,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
+5,USA,10,20,Amerika,Citytrip,Winter,2600,Hotel,New York bezoeken,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
 6,Portugal,4,8,Europa,Wandelen,Lente,800,Hostel,Mooie kust,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
-7,Canada,14,100,Europa,Wandelen,Zomer,4000,Hotel,prachtige wandel locatie,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
+7,Canada,14,20,Europa,Wandelen,Zomer,4000,Hotel,prachtige wandel locatie,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
+
 
 
