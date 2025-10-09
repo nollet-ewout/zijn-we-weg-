@@ -4,7 +4,7 @@ st.title("Startpagina")
 
 # HTML-knop met link
 button_html_1 = """
-<a href="https://jouw-eerste-applicatie.nl" target="_blank" style="
+<a href="https://zijnweweg.streamlit.app/" target="_blank" style="
     background-color: #4CAF50; 
     color: white; 
     padding: 15px 30px; 
@@ -17,7 +17,7 @@ button_html_1 = """
 """
 
 button_html_2 = """
-<a href="https://jouw-tweede-applicatie.nl" target="_blank" style="
+<a href="https://zijnweweg-nieuwe-locatie.streamlit.app/" target="_blank" style="
     background-color: #4CAF50; 
     color: white; 
     padding: 15px 30px; 
