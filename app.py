@@ -6,6 +6,11 @@ import pandas as pd
 def load_data():
     df = pd.read_csv('reislocatie_filter.csv')
     df.columns = df.columns.str.strip()  # verwijder spaties rondom kolomnamen
+    
+    # Zorg dat Budget kolom numeriek is, niet-numerieke waarden worden NaN
+    df['Budget'] = pd.to_numeric(df['Budget'], errors='coerce')
+    df = df.dropna(subset=['Budget'])  # verwijder rijen zonder geldig budget
+    
     return df
 
 data = load_data()
