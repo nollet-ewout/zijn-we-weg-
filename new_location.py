@@ -17,16 +17,36 @@ repo = g.get_repo(REPO_NAME)
 
 st.title("Nieuwe locatie toevoegen")
 
+# Initialize or reset form inputs in session state
+if "land_regio" not in st.session_state:
+    st.session_state.land_regio = ""
+if "duur" not in st.session_state:
+    st.session_state.duur = ""
+if "bestemming" not in st.session_state:
+    st.session_state.bestemming = ""
+if "reistype" not in st.session_state:
+    st.session_state.reistype = ""
+if "seizoen" not in st.session_state:
+    st.session_state.seizoen = ""
+if "budget" not in st.session_state:
+    st.session_state.budget = ""
+if "accommodatie" not in st.session_state:
+    st.session_state.accommodatie = ""
+if "opmerking" not in st.session_state:
+    st.session_state.opmerking = ""
+if "url" not in st.session_state:
+    st.session_state.url = ""
+
 with st.form("locatie_form"):
-    land_regio = st.text_input("Land / Regio")
-    duur = st.text_input("Duur")
-    bestemming = st.text_input("Bestemming")
-    reistype = st.text_input("Reistype / Doel")
-    seizoen = st.text_input("Seizoen")
-    budget = st.text_input("Budget")
-    accommodatie = st.text_input("Accommodatie")
-    opmerking = st.text_area("Opmerking")
-    url = st.text_input("URL")
+    land_regio = st.text_input("Land / Regio", value=st.session_state.land_regio)
+    duur = st.text_input("Duur", value=st.session_state.duur)
+    bestemming = st.text_input("Bestemming", value=st.session_state.bestemming)
+    reistype = st.text_input("Reistype / Doel", value=st.session_state.reistype)
+    seizoen = st.text_input("Seizoen", value=st.session_state.seizoen)
+    budget = st.text_input("Budget", value=st.session_state.budget)
+    accommodatie = st.text_input("Accommodatie", value=st.session_state.accommodatie)
+    opmerking = st.text_area("Opmerking", value=st.session_state.opmerking)
+    url = st.text_input("URL", value=st.session_state.url)
     submitted = st.form_submit_button("Opslaan")
 
 if submitted:
@@ -72,5 +92,20 @@ if submitted:
             branch="main"
         )
         st.success(f"Locatie met ID {nieuw_id} succesvol toegevoegd!")
+
+        # Reset form fields in session_state
+        st.session_state.land_regio = ""
+        st.session_state.duur = ""
+        st.session_state.bestemming = ""
+        st.session_state.reistype = ""
+        st.session_state.seizoen = ""
+        st.session_state.budget = ""
+        st.session_state.accommodatie = ""
+        st.session_state.opmerking = ""
+        st.session_state.url = ""
+
+        # Trigger rerun to clear form inputs
+        st.experimental_rerun()
+
     except Exception as e:
         st.error(f"Fout bij toevoegen locatie: {e}")
