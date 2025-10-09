@@ -4,9 +4,13 @@ import pandas as pd
 # Inladen data
 @st.cache_data
 def load_data():
-    return pd.read_csv('reislocatie_filter.csv')
+    df = pd.read_csv('reislocatie_filter.csv')
+    df.columns = df.columns.str.strip()  # verwijder spaties rondom kolomnamen
+    return df
 
 data = load_data()
+
+st.write(data.columns)  # om te debuggen welke kolomnamen er zijn
 
 st.title("Ideale Reislocatie Zoeker")
 
@@ -30,8 +34,7 @@ st.write("### Geselecteerde locaties:")
 if not filtered_data.empty:
     for _, row in filtered_data.iterrows():
         naam = row['Land / Regio']
-        url = row['URL']
-        # Maak klikbare link als URL aanwezig is, anders normaal tekst
+        url = row.get('URL', '')  # veiliger dan directe index
         if pd.notna(url) and url.strip() != '':
             st.markdown(f"- [{naam}]({url}) : {row['Opmerking']}")
         else:
