@@ -10,8 +10,7 @@ def load_data():
     # Zet 'Budget' om naar numeriek, foute waarden worden NaN
     df['Budget'] = pd.to_numeric(df['Budget'], errors='coerce')
     
-    # Je kunt hier eventueel ook gelijk rijen verwijderen zonder budget, 
-    # maar laat dat liever aan filtering over om opties compleet te houden.
+    # Optioneel: verwijder rijen zonder geldig budget alleen bij filtering, niet hier
     return df
 
 data = load_data()
@@ -26,7 +25,13 @@ duur = st.selectbox('Hoe lang wil je weg?', ['Maak een keuze...'] + duur_options
 if duur != 'Maak een keuze...':
     min_budget = int(data['Budget'].min())
     max_budget = int(data['Budget'].max())
-    budget = st.slider('Wat is je budget? (min - max)', min_value=min_budget, max_value=max_budget, value=(min_budget, max_budget))
+    budget = st.slider(
+        'Wat is je budget? (min - max)', 
+        min_value=min_budget, 
+        max_value=max_budget, 
+        value=(min_budget, max_budget),
+        step=100
+    )
 else:
     budget = None
 
@@ -64,10 +69,4 @@ if all(selection != 'Maak een keuze...' for selection in [duur, bestemming, reis
             naam = row['Land / Regio']
             url = row.get('URL', '')  # veiliger dan directe index
             if pd.notna(url) and url.strip() != '':
-                st.markdown(f"- [{naam}]({url}) : {row['Opmerking']}")
-            else:
-                st.write(f"- {naam}: {row['Opmerking']}")
-    else:
-        st.write("Geen locaties gevonden.")
-else:
-    st.write("Beantwoord alle vragen om locaties te zien.")
+                st.markdown(f"- [{naam}]
