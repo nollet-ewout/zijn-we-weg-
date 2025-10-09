@@ -9,33 +9,32 @@ def load_data():
 
     # Zet 'Budget' om naar numeriek, foute waarden worden NaN
     df['Budget'] = pd.to_numeric(df['Budget'], errors='coerce')
-    
-    # Optioneel: verwijder rijen zonder geldig budget alleen bij filtering, niet hier
+
     return df
 
 data = load_data()
 
 st.title("Ideale Reislocatie Zoeker")
 
-# Vraag 1: Duur (keuzemenu), zonder lege opties
+# Vraag 1: Duur
 duur_options = sorted(data['Duur'].dropna().unique())
 duur = st.selectbox('Hoe lang wil je weg?', ['Maak een keuze...'] + duur_options)
 
-# Vraag 2: Budget slider verschijnt als duur is gekozen
+# Vraag 2: Budget slider (stapgrootte 100)
 if duur != 'Maak een keuze...':
     min_budget = int(data['Budget'].min())
     max_budget = int(data['Budget'].max())
     budget = st.slider(
-        'Wat is je budget? (min - max)', 
-        min_value=min_budget, 
-        max_value=max_budget, 
+        'Wat is je budget? (min - max)',
+        min_value=min_budget,
+        max_value=max_budget,
         value=(min_budget, max_budget),
         step=100
     )
 else:
     budget = None
 
-# Vraag 3: Bestemming (continent)
+# Vraag 3: Bestemming
 bestemming_options = sorted(data['Bestemming'].dropna().unique()) if budget is not None else []
 bestemming = st.selectbox('Op welk continent wil je reizen?', ['Maak een keuze...'] + bestemming_options) if budget is not None else 'Maak een keuze...'
 
@@ -67,6 +66,12 @@ if all(selection != 'Maak een keuze...' for selection in [duur, bestemming, reis
     if not filtered_data.empty:
         for _, row in filtered_data.iterrows():
             naam = row['Land / Regio']
-            url = row.get('URL', '')  # veiliger dan directe index
+            url = row.get('URL', '')
             if pd.notna(url) and url.strip() != '':
-                st.markdown(f"- [{naam}]
+                st.markdown(f"- [{naam}]({url}) : {row['Opmerking']}")
+            else:
+                st.write(f"- {naam}: {row['Opmerking']}")
+    else:
+        st.write("Geen locaties gevonden.")
+else:
+    st.write("Beantwoord alle vragen om locaties te zien.")
