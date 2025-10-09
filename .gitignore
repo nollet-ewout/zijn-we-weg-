@@ -1,0 +1,10 @@
+# Python bestanden die niet moeten worden gecommit
+__pycache__/
+*.pyc
+
+# Environment files met geheimen
+.env
+
+# IDE en OS bestanden
+.vscode/
+.DS_Store
