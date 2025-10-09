@@ -7,9 +7,9 @@ import io
 app = Flask(__name__)
 
 # GitHub setup
-GITHUB_TOKEN = "je_personal_access_token_hier"
-REPO_NAME = "gebruikersnaam/reponame"
-CSV_PATH = "data/locaties.csv"
+GITHUB_TOKEN = "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"
+REPO_NAME = "nollet-ewout/zijn-we-weg-"
+CSV_PATH = "reislocatie_filter.csv"
 
 g = Github(GITHUB_TOKEN)
 repo = g.get_repo(REPO_NAME)
