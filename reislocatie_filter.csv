@@ -1,4 +1,4 @@
-ID,Land / Regio,Minimum Duur,Maximum Duur,Bestemming,Reistype / Doel,Seizoen,Budget,Accommodatie,Opmerking,URL
+ID,Land / Regio,Minimum Duur,Maximum Duur,Continent,Reistype / Doel,Seizoen,Budget,Accommodatie,Opmerking,URL
 1,Italië,5,8,Europa,Roadtrip,Zomer,1200,Hotel,Mooie wijnstreek,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
 2,Japan,10,20,Azië,Roadtrip,Lente,2500,Hostel,Sakura bloesem,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
 3,Zuid-Frankrijk,10,20,Europa,Rust,Zomer,1400,Vakantiehuis,Nabij strand,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
@@ -19,6 +19,7 @@ ID,Land / Regio,Minimum Duur,Maximum Duur,Bestemming,Reistype / Doel,Seizoen,Bud
 18,België,1,3,Europa,Weekend,Herfst,400,Vakantiehuis,Ardennen,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
 19,Nederland,1,3,Europa,Weekend,Lente,400,Vakantiehuis,Scheveningen,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
 20,Belgie,1,1,Europa,Daguitstap,Winter,100,Hotel,Wellness,https://github.com/nollet-ewout/zijn-we-weg-/raw/refs/heads/main/Spain.docx
+
 
 
 
