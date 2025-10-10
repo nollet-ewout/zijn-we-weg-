@@ -42,12 +42,12 @@ budget = st.slider(
     step=100
 )
 
-# Bestemming selectbox
-bestemming_options = sorted(data['Land / Regio'].dropna().unique())
-bestemming = st.selectbox('Op welk continent wil je reizen?', ['Maak een keuze...'] + bestemming_options)
+# Continent selectbox (vervanging voor bestemming)
+continent_options = sorted(data['Continent'].dropna().unique())
+continent = st.selectbox('Op welk continent wil je reizen?', ['Maak een keuze...'] + continent_options)
 
-# Reistype / Doel selectbox (verschijnt pas als bestemming gekozen)
-if bestemming != 'Maak een keuze...':
+# Reistype / Doel selectbox (verschijnt pas als continent gekozen)
+if continent != 'Maak een keuze...':
     reistype_options = sorted(data['Reistype / Doel'].dropna().unique())
     reistype = st.selectbox('Wat is het doel van je reis?', ['Maak een keuze...'] + reistype_options)
 else:
@@ -56,7 +56,6 @@ else:
 # Seizoen selectbox (verschijnt pas als reistype gekozen)
 if reistype != 'Maak een keuze...':
     seizoen_raw_options = data['Seizoen'].dropna().unique()
-    # Om unieke individuele seizoenen te krijgen uit gefuseerde strings:
     seizoen_split = set()
     for item in seizoen_raw_options:
         for s in item.split(';'):
@@ -74,13 +73,12 @@ else:
     accommodatie = 'Maak een keuze...'
 
 # Filteren op basis van alle keuzes
-if all(selection != 'Maak een keuze...' for selection in [bestemming, reistype, seizoen, accommodatie]):
+if all(selection != 'Maak een keuze...' for selection in [continent, reistype, seizoen, accommodatie]):
     filtered_data = data.dropna(subset=['Budget', 'Minimum Duur', 'Maximum Duur'])
     filtered_data = filtered_data[
         (filtered_data['Budget'] >= budget[0]) & (filtered_data['Budget'] <= budget[1]) &
-        (filtered_data['Land / Regio'] == bestemming) &
+        (filtered_data['Continent'] == continent) &
         (filtered_data['Reistype / Doel'] == reistype) &
-        # aangepaste check op seizoen met splitsing
         (filtered_data['Seizoen'].apply(lambda x: seizoen in [s.strip() for s in x.split(';')])) &
         (filtered_data['Accommodatie'] == accommodatie) &
         (filtered_data['Maximum Duur'] >= duur_slider[0]) &  
