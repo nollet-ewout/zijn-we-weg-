@@ -43,7 +43,7 @@ budget = st.slider(
 )
 
 # Bestemming selectbox
-bestemming_options = sorted(data['Bestemming'].dropna().unique())
+bestemming_options = sorted(data['Land / Regio'].dropna().unique())
 bestemming = st.selectbox('Op welk continent wil je reizen?', ['Maak een keuze...'] + bestemming_options)
 
 # Reistype / Doel selectbox (verschijnt pas als bestemming gekozen)
@@ -55,7 +55,13 @@ else:
 
 # Seizoen selectbox (verschijnt pas als reistype gekozen)
 if reistype != 'Maak een keuze...':
-    seizoen_options = sorted(data['Seizoen'].dropna().unique())
+    seizoen_raw_options = data['Seizoen'].dropna().unique()
+    # Om unieke individuele seizoenen te krijgen uit gefuseerde strings:
+    seizoen_split = set()
+    for item in seizoen_raw_options:
+        for s in item.split(';'):
+            seizoen_split.add(s.strip())
+    seizoen_options = sorted(seizoen_split)
     seizoen = st.selectbox('In welk seizoen wil je reizen?', ['Maak een keuze...'] + seizoen_options)
 else:
     seizoen = 'Maak een keuze...'
@@ -72,12 +78,13 @@ if all(selection != 'Maak een keuze...' for selection in [bestemming, reistype, 
     filtered_data = data.dropna(subset=['Budget', 'Minimum Duur', 'Maximum Duur'])
     filtered_data = filtered_data[
         (filtered_data['Budget'] >= budget[0]) & (filtered_data['Budget'] <= budget[1]) &
-        (filtered_data['Bestemming'] == bestemming) &
+        (filtered_data['Land / Regio'] == bestemming) &
         (filtered_data['Reistype / Doel'] == reistype) &
-        (filtered_data['Seizoen'] == seizoen) &
+        # aangepaste check op seizoen met splitsing
+        (filtered_data['Seizoen'].apply(lambda x: seizoen in [s.strip() for s in x.split(';')])) &
         (filtered_data['Accommodatie'] == accommodatie) &
-        (filtered_data['Maximum Duur'] >= duur_slider[0]) &  # overlap duur min slider met max duur locatie
-        (filtered_data['Minimum Duur'] <= duur_slider[1])    # overlap duur max slider met min duur locatie
+        (filtered_data['Maximum Duur'] >= duur_slider[0]) &  
+        (filtered_data['Minimum Duur'] <= duur_slider[1])    
     ]
 
     st.write("### Geselecteerde locaties:")
