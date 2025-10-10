@@ -21,9 +21,6 @@ data = load_data()
 
 st.title("Ideale Reislocatie Zoeker")
 
-# Controle van kolomnamen
-# print(repr(data.columns.tolist()))  # Kan gebruikt worden voor debug
-
 # Duur slider gebaseerd op minimum en maximum duur in dataset
 min_duur = int(data['minimum duur'].min())
 max_duur = int(data['maximum duur'].max())
@@ -57,7 +54,7 @@ if continent != 'Maak een keuze...':
 else:
     reistype = 'Maak een keuze...'
 
-# Seizoen selectbox (verschijnt pas als reistype gekozen)
+# Seizoen multiselect (meerdere opties selecteerbaar)
 if reistype != 'Maak een keuze...':
     seizoen_raw_options = data['seizoen'].dropna().unique()
     seizoen_split = set()
@@ -65,25 +62,29 @@ if reistype != 'Maak een keuze...':
         for s in item.split(';'):
             seizoen_split.add(s.strip())
     seizoen_options = sorted(seizoen_split)
-    seizoen = st.selectbox('In welk seizoen wil je reizen?', ['Maak een keuze...'] + seizoen_options)
+    
+    seizoen = st.multiselect(
+        'In welk seizoen wil je reizen? (Meerdere mogelijk)', 
+        options=seizoen_options
+    )
 else:
-    seizoen = 'Maak een keuze...'
+    seizoen = []
 
 # Accommodatie selectbox (verschijnt pas als seizoen gekozen)
-if seizoen != 'Maak een keuze...':
+if seizoen:
     accommodatie_options = sorted(data['accommodatie'].dropna().unique())
     accommodatie = st.selectbox('Welke type accommodatie wil je?', ['Maak een keuze...'] + accommodatie_options)
 else:
     accommodatie = 'Maak een keuze...'
 
 # Filteren op basis van alle keuzes
-if all(selection != 'Maak een keuze...' for selection in [continent, reistype, seizoen, accommodatie]):
+if all(selection != 'Maak een keuze...' for selection in [continent, reistype, accommodatie]) and seizoen:
     filtered_data = data.dropna(subset=['budget', 'minimum duur', 'maximum duur'])
     filtered_data = filtered_data[
         (filtered_data['budget'] >= budget[0]) & (filtered_data['budget'] <= budget[1]) &
         (filtered_data['continent'] == continent) &
         (filtered_data['reistype / doel'] == reistype) &
-        (filtered_data['seizoen'].apply(lambda x: seizoen in [s.strip() for s in x.split(';')])) &
+        (filtered_data['seizoen'].apply(lambda x: any(s in [s.strip() for s in x.split(';')] for s in seizoen))) &
         (filtered_data['accommodatie'] == accommodatie) &
         (filtered_data['maximum duur'] >= duur_slider[0]) &  
         (filtered_data['minimum duur'] <= duur_slider[1])    
