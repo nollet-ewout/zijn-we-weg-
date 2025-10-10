@@ -20,6 +20,8 @@ data = load_data()
 
 st.title("Ideale Reislocatie Zoeker")
 
+print(repr(data.columns.tolist()))
+
 # Duur slider gebaseerd op minimum en maximum duur in dataset
 min_duur = int(data['Minimum Duur'].min())
 max_duur = int(data['Maximum Duur'].max())
@@ -98,4 +100,5 @@ if all(selection != 'Maak een keuze...' for selection in [continent, reistype, s
         st.write("Geen locaties gevonden.")
 else:
     st.write("Beantwoord alle vragen om locaties te zien.")
+
 
