@@ -98,3 +98,4 @@ if all(selection != 'Maak een keuze...' for selection in [continent, reistype, s
         st.write("Geen locaties gevonden.")
 else:
     st.write("Beantwoord alle vragen om locaties te zien.")
+
