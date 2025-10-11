@@ -3,7 +3,7 @@ import pandas as pd
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-# Google Sheets koppeling via Streamlit secrets
+# Google Sheets data laden via Streamlit secrets
 def load_data_from_gsheets():
     secrets = st.secrets["google_service_account"]
     spreadsheet_id = st.secrets["spreadsheet_id"]
@@ -15,50 +15,42 @@ def load_data_from_gsheets():
     service = build('sheets', 'v4', credentials=credentials)
     sheet = service.spreadsheets()
 
-    # Haal data op uit het tabblad 'Sheet1'
+    # Haal data op uit tabblad 'Sheet1'
     result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Sheet1").execute()
     values = result.get('values', [])
 
     if not values:
         st.error("Geen data gevonden in Google Sheet.")
-        return pd.DataFrame()  # lege df
+        return pd.DataFrame()  # lege dataframe
 
-    # Eerste rij als kolomnamen gebruiken
     df = pd.DataFrame(values[1:], columns=values[0])
-
-    # Omzetten van kolommen naar juiste typen
     df.columns = df.columns.str.strip().str.lower()
-    numeric_cols = ['minimum duur', 'maximum duur', 'budget']
-    for col in numeric_cols:
-        df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    # Zet kolommen om naar juiste typen
+    for col in ['minimum duur', 'maximum duur', 'budget']:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
 
     return df
 
 data = load_data_from_gsheets()
+
 if data.empty:
     st.stop()
 
 st.title("Ideale Reislocatie Zoeker")
 
-# Filter widgets
+# Filters - allemaal zichtbaar vanaf start
 min_duur = int(data['minimum duur'].min())
 max_duur = int(data['maximum duur'].max())
 duur_slider = st.slider(
-    'Hoe lang wil je weg? (dagen)',
-    min_value=min_duur,
-    max_value=max_duur,
-    value=(min_duur, max_duur),
-    step=1
+    'Hoe lang wil je weg? (dagen)', min_duur, max_duur, (min_duur, max_duur), step=1
 )
 
 min_budget = int(data['budget'].min())
 max_budget = int(data['budget'].max())
 budget = st.slider(
-    'Wat is je budget? (min - max)',
-    min_value=min_budget,
-    max_value=max_budget,
-    value=(min_budget, max_budget),
-    step=100
+    'Wat is je budget? (min - max)', min_budget, max_budget, (min_budget, max_budget), step=100
 )
 
 continent_options = sorted(data['continent'].dropna().unique())
@@ -78,7 +70,7 @@ seizoen = st.multiselect('In welk seizoen wil je reizen? (Meerdere mogelijk)', s
 accommodatie_options = sorted(data['accommodatie'].dropna().unique())
 accommodatie = st.multiselect('Welke type accommodatie wil je?', accommodatie_options)
 
-# Filteren
+# Data filteren
 filtered_data = data.dropna(subset=['budget', 'minimum duur', 'maximum duur'])
 
 filtered_data = filtered_data[
