@@ -3,7 +3,6 @@ import pandas as pd
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-@st.cache_resource
 def get_gsheets_service():
     credentials_info = {
         "type": "service_account",
@@ -24,7 +23,6 @@ def get_gsheets_service():
     service = build('sheets', 'v4', credentials=credentials)
     return service
 
-@st.cache_data
 def load_data_from_gsheets():
     service = get_gsheets_service()
     spreadsheet_id = st.secrets["spreadsheet_id"]
@@ -51,7 +49,6 @@ def load_data_from_gsheets():
     return df
 
 def filter_data(df, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie):
-    # Filter op duur en budget
     df = df.dropna(subset=['budget', 'minimum duur', 'maximum duur'])
     df = df[
         (df['maximum duur'] >= duur_slider[0]) &
@@ -60,19 +57,15 @@ def filter_data(df, duur_slider, budget_slider, continent, reistype, seizoen, ac
         (df['budget'] <= budget_slider[1])
     ]
 
-    # Filter continent
     if continent:
         df = df[df['continent'].isin(continent)]
 
-    # Filter reistype
     if reistype:
         df = df[df['reistype / doel'].isin(reistype)]
 
-    # Filter seizoen
     if seizoen:
         df = df[df['seizoen'].apply(lambda x: any(s in [s.strip() for s in x.split(';')] for s in seizoen))]
 
-    # Filter accommodatie
     if accommodatie:
         df = df[df['accommodatie'].isin(accommodatie)]
 
@@ -106,7 +99,7 @@ def main():
             for s in item.split(';'):
                 seizoen_split.add(s.strip())
         seizoen_options = sorted(seizoen_split)
-        seizoen = st.multiselect('In welk seizoen wil je reizen?', seizoen_options)
+        seizoen = st.multiselect('In welk seizoen wil je reizen? (Meerdere mogelijk)', seizoen_options)
 
         accommodatie_options = sorted(data['accommodatie'].dropna().unique())
         accommodatie = st.multiselect('Welke type accommodatie wil je?', accommodatie_options)
@@ -128,4 +121,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
