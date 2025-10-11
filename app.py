@@ -1,25 +1,21 @@
 import streamlit as st
 import pandas as pd
 
-# Data laden met minimale verwerking
+# Data laden en voorbereiden
 @st.cache_data
 def load_data():
     df = pd.read_csv('reislocatie_filter.csv')
-    # Kolomnamen strippen en lowercase maken
     df.columns = df.columns.str.strip().str.lower()
-    
-    # Duurtijden en budget omzetten naar numeriek
     df['minimum duur'] = pd.to_numeric(df['minimum duur'], errors='coerce')
     df['maximum duur'] = pd.to_numeric(df['maximum duur'], errors='coerce')
     df['budget'] = pd.to_numeric(df['budget'], errors='coerce')
-
     return df
 
 data = load_data()
 
 st.title("Ideale Reislocatie Zoeker")
 
-# Duur slider
+# Slider voor duur
 min_duur = int(data['minimum duur'].min())
 max_duur = int(data['maximum duur'].max())
 duur_slider = st.slider(
@@ -30,7 +26,7 @@ duur_slider = st.slider(
     step=1
 )
 
-# Budget slider
+# Slider voor budget
 min_budget = int(data['budget'].min())
 max_budget = int(data['budget'].max())
 budget = st.slider(
@@ -41,40 +37,28 @@ budget = st.slider(
     step=100
 )
 
-# Continent multiselect
+# Multiselect continent
 continent_options = sorted(data['continent'].dropna().unique())
 continent = st.multiselect('Op welk continent wil je reizen?', continent_options)
 
-# Reistype / Doel multiselect
-if continent:
-    reistype_options = sorted(data['reistype / doel'].dropna().unique())
-    reistype = st.multiselect('Wat is het doel van je reis?', reistype_options)
-else:
-    reistype = []
+# Multiselect reistype / doel
+reistype_options = sorted(data['reistype / doel'].dropna().unique())
+reistype = st.multiselect('Wat is het doel van je reis?', reistype_options)
 
-# Seizoen multiselect
-if reistype:
-    seizoen_raw_options = data['seizoen'].dropna().unique()
-    seizoen_split = set()
-    for item in seizoen_raw_options:
-        for s in item.split(';'):
-            seizoen_split.add(s.strip())
-    seizoen_options = sorted(seizoen_split)
-    seizoen = st.multiselect(
-        'In welk seizoen wil je reizen? (Meerdere mogelijk)', 
-        options=seizoen_options
-    )
-else:
-    seizoen = []
+# Multiselect seizoen (splitsen van opties met ;)
+seizoen_raw_options = data['seizoen'].dropna().unique()
+seizoen_split = set()
+for item in seizoen_raw_options:
+    for s in item.split(';'):
+        seizoen_split.add(s.strip())
+seizoen_options = sorted(seizoen_split)
+seizoen = st.multiselect('In welk seizoen wil je reizen? (Meerdere mogelijk)', seizoen_options)
 
-# Accommodatie multiselect
-if seizoen:
-    accommodatie_options = sorted(data['accommodatie'].dropna().unique())
-    accommodatie = st.multiselect('Welke type accommodatie wil je?', accommodatie_options)
-else:
-    accommodatie = []
+# Multiselect accommodatie
+accommodatie_options = sorted(data['accommodatie'].dropna().unique())
+accommodatie = st.multiselect('Welke type accommodatie wil je?', accommodatie_options)
 
-# Filteren op basis van keuzes (optioneel per filter)
+# Filteren op basis van alle keuzes (optioneel per filter)
 filtered_data = data.dropna(subset=['budget', 'minimum duur', 'maximum duur'])
 
 filtered_data = filtered_data[
@@ -114,4 +98,3 @@ if not filtered_data.empty:
             st.write(f"- {naam}: {row['opmerking']}")
 else:
     st.write("Geen locaties gevonden.")
-
