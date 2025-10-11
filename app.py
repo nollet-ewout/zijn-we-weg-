@@ -16,18 +16,21 @@ def load_data_from_gsheets():
         "auth_provider_x509_cert_url": st.secrets["auth_provider_x509_cert_url"],
         "client_x509_cert_url": st.secrets["client_x509_cert_url"]
     }
-    spreadsheet_id = st.secrets["spreadsheet_id"]
-
     credentials = service_account.Credentials.from_service_account_info(
         credentials_info,
         scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"]
     )
+    spreadsheet_id = st.secrets["spreadsheet_id"]
     service = build('sheets', 'v4', credentials=credentials)
     sheet = service.spreadsheets()
 
-    # Let op: pas 'range' aan naar Naam tabblad in je sheet ("Opties")
-    result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Opties").execute()
-    values = result.get('values', [])
+    try:
+        # LET OP: tabbladnaam exact schrijven incl. hoofdletter (Opties)
+        result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Opties").execute()
+        values = result.get('values', [])
+    except Exception as e:
+        st.error(f"Error bij ophalen data van Google Sheets: {e}")
+        st.stop()
 
     if not values:
         st.error("Geen data gevonden in Google Sheet.")
@@ -49,7 +52,6 @@ if data.empty:
 
 st.title("Ideale Reislocatie Zoeker")
 
-# Filters
 min_duur = int(data['minimum duur'].min())
 max_duur = int(data['maximum duur'].max())
 duur_slider = st.slider(
@@ -79,7 +81,6 @@ seizoen = st.multiselect('In welk seizoen wil je reizen? (Meerdere mogelijk)', s
 accommodatie_options = sorted(data['accommodatie'].dropna().unique())
 accommodatie = st.multiselect('Welke type accommodatie wil je?', accommodatie_options)
 
-# Data filteren
 filtered_data = data.dropna(subset=['budget', 'minimum duur', 'maximum duur'])
 
 filtered_data = filtered_data[
@@ -106,7 +107,6 @@ if seizoen:
 if accommodatie:
     filtered_data = filtered_data[filtered_data['accommodatie'].isin(accommodatie)]
 
-# Resultaten tonen
 st.write("### Geselecteerde locaties:")
 
 if not filtered_data.empty:
