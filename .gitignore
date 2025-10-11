@@ -4,6 +4,7 @@ __pycache__/
 
 # Environment files met geheimen
 .env
+.streamlit
 
 # IDE en OS bestanden
 .vscode/
