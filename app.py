@@ -3,7 +3,8 @@ import pandas as pd
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-def load_data_from_gsheets():
+@st.cache_resource
+def get_gsheets_service():
     credentials_info = {
         "type": "service_account",
         "project_id": st.secrets["project_id"],
@@ -20,17 +21,21 @@ def load_data_from_gsheets():
         credentials_info,
         scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"]
     )
-    spreadsheet_id = st.secrets["spreadsheet_id"]
     service = build('sheets', 'v4', credentials=credentials)
+    return service
+
+@st.cache_data
+def load_data_from_gsheets():
+    service = get_gsheets_service()
+    spreadsheet_id = st.secrets["spreadsheet_id"]
     sheet = service.spreadsheets()
 
     try:
-        # LET OP: tabbladnaam exact schrijven incl. hoofdletter (Opties)
         result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Opties!A1:L").execute()
         values = result.get('values', [])
     except Exception as e:
         st.error(f"Error bij ophalen data van Google Sheets: {e}")
-        st.stop()
+        return pd.DataFrame()
 
     if not values:
         st.error("Geen data gevonden in Google Sheet.")
@@ -45,79 +50,81 @@ def load_data_from_gsheets():
 
     return df
 
-data = load_data_from_gsheets()
-
-if data.empty:
-    st.stop()
-
-st.title("Ideale Reislocatie Zoeker")
-
-min_duur = int(data['minimum duur'].min())
-max_duur = int(data['maximum duur'].max())
-duur_slider = st.slider(
-    'Hoe lang wil je weg? (dagen)', min_duur, max_duur, (min_duur, max_duur), step=1
-)
-
-min_budget = int(data['budget'].min())
-max_budget = int(data['budget'].max())
-budget = st.slider(
-    'Wat is je budget? (min - max)', min_budget, max_budget, (min_budget, max_budget), step=100
-)
-
-continent_options = sorted(data['continent'].dropna().unique())
-continent = st.multiselect('Op welk continent wil je reizen?', continent_options)
-
-reistype_options = sorted(data['reistype / doel'].dropna().unique())
-reistype = st.multiselect('Wat is het doel van je reis?', reistype_options)
-
-seizoen_raw_options = data['seizoen'].dropna().unique()
-seizoen_split = set()
-for item in seizoen_raw_options:
-    for s in item.split(';'):
-        seizoen_split.add(s.strip())
-seizoen_options = sorted(seizoen_split)
-seizoen = st.multiselect('In welk seizoen wil je reizen? (Meerdere mogelijk)', seizoen_options)
-
-accommodatie_options = sorted(data['accommodatie'].dropna().unique())
-accommodatie = st.multiselect('Welke type accommodatie wil je?', accommodatie_options)
-
-filtered_data = data.dropna(subset=['budget', 'minimum duur', 'maximum duur'])
-
-filtered_data = filtered_data[
-    (filtered_data['maximum duur'] >= duur_slider[0]) &
-    (filtered_data['minimum duur'] <= duur_slider[1])
-]
-
-filtered_data = filtered_data[
-    (filtered_data['budget'] >= budget[0]) &
-    (filtered_data['budget'] <= budget[1])
-]
-
-if continent:
-    filtered_data = filtered_data[filtered_data['continent'].isin(continent)]
-
-if reistype:
-    filtered_data = filtered_data[filtered_data['reistype / doel'].isin(reistype)]
-
-if seizoen:
-    filtered_data = filtered_data[
-        filtered_data['seizoen'].apply(lambda x: any(s in [s.strip() for s in x.split(';')] for s in seizoen))
+def filter_data(df, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie):
+    # Filter op duur en budget
+    df = df.dropna(subset=['budget', 'minimum duur', 'maximum duur'])
+    df = df[
+        (df['maximum duur'] >= duur_slider[0]) &
+        (df['minimum duur'] <= duur_slider[1]) &
+        (df['budget'] >= budget_slider[0]) &
+        (df['budget'] <= budget_slider[1])
     ]
 
-if accommodatie:
-    filtered_data = filtered_data[filtered_data['accommodatie'].isin(accommodatie)]
+    # Filter continent
+    if continent:
+        df = df[df['continent'].isin(continent)]
 
-st.write("### Geselecteerde locaties:")
+    # Filter reistype
+    if reistype:
+        df = df[df['reistype / doel'].isin(reistype)]
 
-if not filtered_data.empty:
-    for _, row in filtered_data.iterrows():
-        naam = row['land / regio']
-        url = row.get('url', '')
-        if pd.notna(url) and url.strip() != '':
-            st.markdown(f"- [{naam}]({url}) : {row.get('opmerking', '')}")
-        else:
-            st.write(f"- {naam}: {row.get('opmerking', '')}")
-else:
-    st.write("Geen locaties gevonden.")
+    # Filter seizoen
+    if seizoen:
+        df = df[df['seizoen'].apply(lambda x: any(s in [s.strip() for s in x.split(';')] for s in seizoen))]
 
+    # Filter accommodatie
+    if accommodatie:
+        df = df[df['accommodatie'].isin(accommodatie)]
 
+    return df
+
+def main():
+    st.title("Ideale Reislocatie Zoeker")
+
+    data = load_data_from_gsheets()
+    if data.empty:
+        st.stop()
+
+    min_duur = int(data['minimum duur'].min())
+    max_duur = int(data['maximum duur'].max())
+    min_budget = int(data['budget'].min())
+    max_budget = int(data['budget'].max())
+
+    with st.sidebar:
+        duur_slider = st.slider('Hoe lang wil je weg? (dagen)', min_duur, max_duur, (min_duur, max_duur), step=1)
+        budget_slider = st.slider('Wat is je budget? (min - max)', min_budget, max_budget, (min_budget, max_budget), step=100)
+
+        continent_options = sorted(data['continent'].dropna().unique())
+        continent = st.multiselect('Op welk continent wil je reizen?', continent_options)
+
+        reistype_options = sorted(data['reistype / doel'].dropna().unique())
+        reistype = st.multiselect('Wat is het doel van je reis?', reistype_options)
+
+        seizoen_raw_options = data['seizoen'].dropna().unique()
+        seizoen_split = set()
+        for item in seizoen_raw_options:
+            for s in item.split(';'):
+                seizoen_split.add(s.strip())
+        seizoen_options = sorted(seizoen_split)
+        seizoen = st.multiselect('In welk seizoen wil je reizen? (Meerdere mogelijk)', seizoen_options)
+
+        accommodatie_options = sorted(data['accommodatie'].dropna().unique())
+        accommodatie = st.multiselect('Welke type accommodatie wil je?', accommodatie_options)
+
+    filtered_data = filter_data(data, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie)
+
+    st.write("### Geselecteerde locaties:")
+    if not filtered_data.empty:
+        for _, row in filtered_data.iterrows():
+            naam = row['land / regio']
+            url = row.get('url', '')
+            opmerking = row.get('opmerking', '')
+            if pd.notna(url) and url.strip() != '':
+                st.markdown(f"- [{naam}]({url}) : {opmerking}")
+            else:
+                st.write(f"- {naam}: {opmerking}")
+    else:
+        st.write("Geen locaties gevonden.")
+
+if __name__ == "__main__":
+    main()
