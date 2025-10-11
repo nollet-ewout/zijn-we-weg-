@@ -3,30 +3,41 @@ import pandas as pd
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-# Google Sheets data laden via Streamlit secrets
+# Functie om data uit Google Sheets te laden met aangepast secrets gebruik
 def load_data_from_gsheets():
-    secrets = st.secrets["google_service_account"]
-    spreadsheet_id = st.secrets["spreadsheet_id"]
+    # Maak credentials dict van individuele keys in st.secrets
+    credentials_info = {
+        "type": "service_account",
+        "project_id": st.secrets["project_id"],
+        "private_key_id": st.secrets["private_key_id"],
+        "private_key": st.secrets["private_key"].replace('\\n', '\n'),
+        "client_email": st.secrets["client_email"],
+        "client_id": st.secrets["client_id"],
+        "auth_uri": st.secrets["auth_uri"],
+        "token_uri": st.secrets["token_uri"],
+        "auth_provider_x509_cert_url": st.secrets["auth_provider_x509_cert_url"],
+        "client_x509_cert_url": st.secrets["client_x509_cert_url"],
+    }
 
     credentials = service_account.Credentials.from_service_account_info(
-        secrets,
+        credentials_info,
         scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"]
     )
+    spreadsheet_id = st.secrets["spreadsheet_id"]
+
     service = build('sheets', 'v4', credentials=credentials)
     sheet = service.spreadsheets()
 
-    # Haal data op uit tabblad 'Sheet1'
     result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Sheet1").execute()
     values = result.get('values', [])
 
     if not values:
         st.error("Geen data gevonden in Google Sheet.")
-        return pd.DataFrame()  # lege dataframe
+        return pd.DataFrame()
 
     df = pd.DataFrame(values[1:], columns=values[0])
     df.columns = df.columns.str.strip().str.lower()
 
-    # Zet kolommen om naar juiste typen
     for col in ['minimum duur', 'maximum duur', 'budget']:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
@@ -40,7 +51,7 @@ if data.empty:
 
 st.title("Ideale Reislocatie Zoeker")
 
-# Filters - allemaal zichtbaar vanaf start
+# Filters verschijnen vanaf start
 min_duur = int(data['minimum duur'].min())
 max_duur = int(data['maximum duur'].max())
 duur_slider = st.slider(
@@ -70,7 +81,7 @@ seizoen = st.multiselect('In welk seizoen wil je reizen? (Meerdere mogelijk)', s
 accommodatie_options = sorted(data['accommodatie'].dropna().unique())
 accommodatie = st.multiselect('Welke type accommodatie wil je?', accommodatie_options)
 
-# Data filteren
+# Filter de data
 filtered_data = data.dropna(subset=['budget', 'minimum duur', 'maximum duur'])
 
 filtered_data = filtered_data[
@@ -97,7 +108,7 @@ if seizoen:
 if accommodatie:
     filtered_data = filtered_data[filtered_data['accommodatie'].isin(accommodatie)]
 
-# Resultaten tonen
+# Toon resultaten
 st.write("### Geselecteerde locaties:")
 
 if not filtered_data.empty:
