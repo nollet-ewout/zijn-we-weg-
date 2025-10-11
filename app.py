@@ -26,7 +26,7 @@ def load_data_from_gsheets():
 
     try:
         # LET OP: tabbladnaam exact schrijven incl. hoofdletter (Opties)
-        result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Opties").execute()
+        result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Opties!A1:O").execute()
         values = result.get('values', [])
     except Exception as e:
         st.error(f"Error bij ophalen data van Google Sheets: {e}")
@@ -119,3 +119,4 @@ if not filtered_data.empty:
             st.write(f"- {naam}: {row.get('opmerking', '')}")
 else:
     st.write("Geen locaties gevonden.")
+
