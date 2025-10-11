@@ -17,9 +17,6 @@ def load_data():
 
 data = load_data()
 
-# Debug: kijk kolomnamen
-st.write("Kolomnamen in dataset:", data.columns.tolist())
-
 st.title("Ideale Reislocatie Zoeker")
 
 # Duur slider
@@ -117,3 +114,4 @@ if not filtered_data.empty:
             st.write(f"- {naam}: {row['opmerking']}")
 else:
     st.write("Geen locaties gevonden.")
+
