@@ -28,7 +28,7 @@ def load_data_from_gsheets():
     service = build('sheets', 'v4', credentials=credentials)
     sheet = service.spreadsheets()
 
-    result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Sheet1").execute()
+    result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Opties").execute()
     values = result.get('values', [])
 
     if not values:
@@ -121,3 +121,4 @@ if not filtered_data.empty:
             st.write(f"- {naam}: {row.get('opmerking', '')}")
 else:
     st.write("Geen locaties gevonden.")
+
