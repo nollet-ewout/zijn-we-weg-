@@ -1,51 +1,72 @@
 import streamlit as st
 import pandas as pd
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 
-# Data laden en voorbereiden
-@st.cache_data
-def load_data():
-    df = pd.read_csv('reislocatie_filter.csv')
+# Google Sheets koppeling via Streamlit secrets
+def load_data_from_gsheets():
+    secrets = st.secrets["google_service_account"]
+    spreadsheet_id = st.secrets["spreadsheet_id"]
+
+    credentials = service_account.Credentials.from_service_account_info(
+        secrets,
+        scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"]
+    )
+    service = build('sheets', 'v4', credentials=credentials)
+    sheet = service.spreadsheets()
+
+    # Haal data op uit het tabblad 'Sheet1'
+    result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Sheet1").execute()
+    values = result.get('values', [])
+
+    if not values:
+        st.error("Geen data gevonden in Google Sheet.")
+        return pd.DataFrame()  # lege df
+
+    # Eerste rij als kolomnamen gebruiken
+    df = pd.DataFrame(values[1:], columns=values[0])
+
+    # Omzetten van kolommen naar juiste typen
     df.columns = df.columns.str.strip().str.lower()
-    df['minimum duur'] = pd.to_numeric(df['minimum duur'], errors='coerce')
-    df['maximum duur'] = pd.to_numeric(df['maximum duur'], errors='coerce')
-    df['budget'] = pd.to_numeric(df['budget'], errors='coerce')
+    numeric_cols = ['minimum duur', 'maximum duur', 'budget']
+    for col in numeric_cols:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+
     return df
 
-data = load_data()
+data = load_data_from_gsheets()
+if data.empty:
+    st.stop()
 
 st.title("Ideale Reislocatie Zoeker")
 
-# Slider voor duur
+# Filter widgets
 min_duur = int(data['minimum duur'].min())
 max_duur = int(data['maximum duur'].max())
 duur_slider = st.slider(
-    'Hoe lang wil je weg? (dagen)', 
-    min_value=min_duur, 
-    max_value=max_duur, 
+    'Hoe lang wil je weg? (dagen)',
+    min_value=min_duur,
+    max_value=max_duur,
     value=(min_duur, max_duur),
     step=1
 )
 
-# Slider voor budget
 min_budget = int(data['budget'].min())
 max_budget = int(data['budget'].max())
 budget = st.slider(
-    'Wat is je budget? (min - max)', 
-    min_value=min_budget, 
-    max_value=max_budget, 
-    value=(min_budget, max_budget), 
+    'Wat is je budget? (min - max)',
+    min_value=min_budget,
+    max_value=max_budget,
+    value=(min_budget, max_budget),
     step=100
 )
 
-# Multiselect continent
 continent_options = sorted(data['continent'].dropna().unique())
 continent = st.multiselect('Op welk continent wil je reizen?', continent_options)
 
-# Multiselect reistype / doel
 reistype_options = sorted(data['reistype / doel'].dropna().unique())
 reistype = st.multiselect('Wat is het doel van je reis?', reistype_options)
 
-# Multiselect seizoen (splitsen van opties met ;)
 seizoen_raw_options = data['seizoen'].dropna().unique()
 seizoen_split = set()
 for item in seizoen_raw_options:
@@ -54,11 +75,10 @@ for item in seizoen_raw_options:
 seizoen_options = sorted(seizoen_split)
 seizoen = st.multiselect('In welk seizoen wil je reizen? (Meerdere mogelijk)', seizoen_options)
 
-# Multiselect accommodatie
 accommodatie_options = sorted(data['accommodatie'].dropna().unique())
 accommodatie = st.multiselect('Welke type accommodatie wil je?', accommodatie_options)
 
-# Filteren op basis van alle keuzes (optioneel per filter)
+# Filteren
 filtered_data = data.dropna(subset=['budget', 'minimum duur', 'maximum duur'])
 
 filtered_data = filtered_data[
@@ -93,8 +113,8 @@ if not filtered_data.empty:
         naam = row['land / regio']
         url = row.get('url', '')
         if pd.notna(url) and url.strip() != '':
-            st.markdown(f"- [{naam}]({url}) : {row['opmerking']}")
+            st.markdown(f"- [{naam}]({url}) : {row.get('opmerking', '')}")
         else:
-            st.write(f"- {naam}: {row['opmerking']}")
+            st.write(f"- {naam}: {row.get('opmerking', '')}")
 else:
     st.write("Geen locaties gevonden.")
