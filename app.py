@@ -114,6 +114,10 @@ def bestemming_kaartje(row):
     else:
         naam_html = f'<span style="color:#fff; font-weight:bold;">{row["land / regio"]}</span>'
 
+    vervoersmiddel_raw = row.get('vervoersmiddel', '')
+    vervoersmiddelen_list = [v.strip() for v in vervoersmiddel_raw.split(';') if v.strip()]
+    vervoersmiddel_clean = ', '.join(vervoersmiddelen_list)
+
     kaart_html = f"""
     <div style='border:1px solid #ddd; border-radius:8px; padding:20px 25px 20px 25px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.2); background-color: #18181b; overflow: auto;'>
         {img_block}
@@ -123,7 +127,7 @@ def bestemming_kaartje(row):
             <div style='margin-bottom: 6px; color:#fff;'><b>Prijs:</b> €{row.get('budget', '')}</div>
             <div style='margin-bottom: 6px; color:#fff;'><b>Duur:</b> {row.get('minimum duur', '')} - {row.get('maximum duur', '')} dagen</div>
             <div style='margin-bottom: 6px; color:#fff;'><b>Temperatuur:</b> {row.get('temperatuur', '')} °C</div>
-            <div style='margin-bottom: 6px; color:#fff;'><b>Vervoersmiddel:</b> {row.get('vervoersmiddel', '')}</div>
+            <div style='margin-bottom: 6px; color:#fff;'><b>Vervoersmiddel:</b> {vervoersmiddel_clean}</div>
         </div>
     </div>
     """
@@ -168,7 +172,7 @@ def main():
             for s in item.split(';'):
                 seizoen_split.add(s.strip())
         seizoen_options = sorted(seizoen_split)
-        seizoen = st.multiselect('In welk seizoen wil je reizen?', seizoen_options)
+        seizoen = st.multiselect('In welk seizoen wil je reizen? (Meerdere mogelijk)', seizoen_options)
 
         accommodatie_options = sorted(data['accommodatie'].dropna().unique())
         accommodatie = st.multiselect('Welke type accommodatie wil je?', accommodatie_options)
@@ -187,5 +191,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
