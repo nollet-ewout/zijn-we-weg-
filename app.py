@@ -23,6 +23,7 @@ def get_gsheets_service():
     service = build('sheets', 'v4', credentials=credentials)
     return service
 
+@st.cache_data
 def load_data_from_gsheets():
     service = get_gsheets_service()
     spreadsheet_id = st.secrets["spreadsheet_id"]
@@ -71,6 +72,30 @@ def filter_data(df, duur_slider, budget_slider, continent, reistype, seizoen, ac
 
     return df
 
+def bestemming_kaartje(row):
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        if pd.notna(row.get('foto')) and row['foto'].strip() != '':
+            st.image(row['foto'], width=120)
+        else:
+            st.write("Geen foto beschikbaar")
+    with col2:
+        st.markdown(f"### {row['land / regio']}")
+        uitleg = row.get('opmerking', '') or ''
+        st.write(uitleg)
+        
+        prijs = row.get('budget')
+        if pd.notna(prijs):
+            st.markdown(f"**Prijs:** €{prijs}")
+        
+        duur_min = row.get('minimum duur')
+        duur_max = row.get('maximum duur')
+        if pd.notna(duur_min) and pd.notna(duur_max):
+            if duur_min == duur_max:
+                st.markdown(f"**Duur:** {duur_min} dagen")
+            else:
+                st.markdown(f"**Duur:** {duur_min} - {duur_max} dagen")
+
 def main():
     st.title("Ideale Reislocatie Zoeker")
 
@@ -107,15 +132,18 @@ def main():
     filtered_data = filter_data(data, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie)
 
     st.write("### Geselecteerde locaties:")
+
     if not filtered_data.empty:
         for _, row in filtered_data.iterrows():
-            naam = row['land / regio']
-            url = row.get('url', '')
-            opmerking = row.get('opmerking', '')
-            if pd.notna(url) and url.strip() != '':
-                st.markdown(f"- [{naam}]({url}) : {opmerking}")
-            else:
-                st.write(f"- {naam}: {opmerking}")
+            with st.container():
+                st.markdown(
+                    """
+                    <div style='border:1px solid #ddd; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.1);'>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                bestemming_kaartje(row)
     else:
         st.write("Geen locaties gevonden.")
 
