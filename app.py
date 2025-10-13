@@ -32,7 +32,7 @@ def load_data_from_gsheets():
     sheet = service.spreadsheets()
 
     try:
-        result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Opties!A1:L").execute()
+        result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Opties!A1:M").execute()
         values = result.get('values', [])
     except Exception as e:
         st.error(f"Error bij ophalen data van Google Sheets: {e}")
@@ -52,13 +52,13 @@ def load_data_from_gsheets():
     df = pd.DataFrame(normalized_values, columns=values[0])
     df.columns = df.columns.str.strip().str.lower()
 
-    for col in ['minimum duur', 'maximum duur', 'budget']:
+    for col in ['minimum duur', 'maximum duur', 'budget', 'temperatuur']:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
 
     return df
 
-def filter_data(df, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie):
+def filter_data(df, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie, temp_slider, vervoersmiddelen):
     df = df.dropna(subset=['budget', 'minimum duur', 'maximum duur'])
     df = df[
         (df['maximum duur'] >= duur_slider[0]) &
@@ -66,6 +66,8 @@ def filter_data(df, duur_slider, budget_slider, continent, reistype, seizoen, ac
         (df['budget'] >= budget_slider[0]) &
         (df['budget'] <= budget_slider[1])
     ]
+    if 'temperatuur' in df.columns:
+        df = df[(df['temperatuur'] >= temp_slider[0]) & (df['temperatuur'] <= temp_slider[1])]
 
     if continent:
         df = df[df['continent'].isin(continent)]
@@ -78,6 +80,9 @@ def filter_data(df, duur_slider, budget_slider, continent, reistype, seizoen, ac
 
     if accommodatie:
         df = df[df['accommodatie'].isin(accommodatie)]
+
+    if vervoersmiddelen:
+        df = df[df['vervoersmiddel'].apply(lambda x: any(vm.strip() in x.split(';') for vm in vervoersmiddelen))]
 
     return df
 
@@ -104,24 +109,22 @@ def bestemming_kaartje(row):
     else:
         img_block = "<div style='width:120px; height:90px; background:#444; border-radius:8px; margin-right:25px;'></div>"
 
-    # Maak naam klikbare link als URL bestaat
-    if url:
-        naam_html = f'<a href="{url}" target="_blank" style="color:#1e90ff; text-decoration:none;">{row["land / regio"]}</a>'
-    else:
-        naam_html = f'<span style="color:#fff;">{row["land / regio"]}</span>'
+    naam_html = f'<a href="{url}" target="_blank" style="color:#1e90ff; text-decoration:none;">{row["land / regio"]}</a>' if url else f'<span style="color:#fff;">{row["land / regio"]}</span>'
 
     kaart_html = f"""
-    <div style='border:1px solid #ddd; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.1); background-color: #18181b; display: flex; align-items: center;'>
+    <div style='border:1px solid #ddd; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.1);
+    background-color: #18181b; display: flex; align-items: center;'>
         {img_block}
         <div>
             <h3 style='margin-bottom: 5px; margin-top:0px;'>{naam_html}</h3>
             <div style='margin-bottom: 6px; color:#fff;'>{row.get('opmerking', '') or ''}</div>
             <div style='margin-bottom: 3px; color:#fff;'><b>Prijs:</b> €{row.get('budget', '')}</div>
             <div style='margin-bottom: 3px; color:#fff;'><b>Duur:</b> {row.get('minimum duur', '')} - {row.get('maximum duur', '')} dagen</div>
+            <div style='margin-bottom: 3px; color:#fff;'><b>Temperatuur:</b> {row.get('temperatuur', '')} °C</div>
+            <div style='margin-bottom: 3px; color:#fff;'><b>Vervoersmiddel:</b> {row.get('vervoersmiddel', '')}</div>
         </div>
     </div>
     """
-
     st.markdown(kaart_html, unsafe_allow_html=True)
 
 def main():
@@ -136,9 +139,19 @@ def main():
     min_budget = int(data['budget'].min())
     max_budget = int(data['budget'].max())
 
+    min_temp = int(data['temperatuur'].min()) if 'temperatuur' in data.columns else 0
+    max_temp = int(data['temperatuur'].max()) if 'temperatuur' in data.columns else 40
+
+    vervoersmiddelen_options = sorted(set(
+        v.strip()
+        for row in data['vervoersmiddel'].dropna()
+        for v in row.split(';')
+    )) if 'vervoersmiddel' in data.columns else []
+
     with st.sidebar:
         duur_slider = st.slider('Hoe lang wil je weg? (dagen)', min_duur, max_duur, (min_duur, max_duur), step=1)
         budget_slider = st.slider('Wat is je budget? (min - max)', min_budget, max_budget, (min_budget, max_budget), step=100)
+        temp_slider = st.slider('Temperatuurbereik (°C)', min_temp, max_temp, (min_temp, max_temp), step=1)
 
         continent_options = sorted(data['continent'].dropna().unique())
         continent = st.multiselect('Op welk continent wil je reizen?', continent_options)
@@ -157,7 +170,9 @@ def main():
         accommodatie_options = sorted(data['accommodatie'].dropna().unique())
         accommodatie = st.multiselect('Welke type accommodatie wil je?', accommodatie_options)
 
-    filtered_data = filter_data(data, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie)
+        vervoersmiddelen = st.multiselect('Vervoersmiddel', vervoersmiddelen_options)
+
+    filtered_data = filter_data(data, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie, temp_slider, vervoersmiddelen)
 
     st.write("### Geselecteerde locaties:")
 
