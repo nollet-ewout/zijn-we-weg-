@@ -32,7 +32,7 @@ def load_data_from_gsheets():
     sheet = service.spreadsheets()
 
     try:
-        result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Opties!A1:O").execute()
+        result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Opties!A1:P").execute()
         values = result.get('values', [])
     except Exception as e:
         st.error(f"Error bij ophalen data van Google Sheets: {e}")
@@ -184,4 +184,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
