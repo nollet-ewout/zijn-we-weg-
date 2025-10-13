@@ -7,7 +7,7 @@ import requests
 
 def get_gsheets_service():
     credentials_info = {
-        "type": st.secrets["type"],
+        "type": "service_account",
         "project_id": st.secrets["project_id"],
         "private_key_id": st.secrets["private_key_id"],
         "private_key": st.secrets["private_key"].replace('\\n', '\n'),
@@ -45,7 +45,6 @@ def load_data_from_gsheets():
     num_cols = len(values[0])
     normalized_values = []
     for row in values[1:]:
-        # Vul lege kolommen aan met lege strings om consistente breedte te krijgen
         if len(row) < num_cols:
             row += [''] * (num_cols - len(row))
         normalized_values.append(row)
@@ -100,6 +99,7 @@ def image_to_base64(image_url):
 def bestemming_kaartje(row):
     foto_url = row.get('foto', '').strip()
     url = row.get('url', '').strip()
+    img_block = ""
     if foto_url:
         img_b64 = image_to_base64(foto_url)
         if img_b64:
