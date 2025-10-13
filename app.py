@@ -93,44 +93,30 @@ def image_to_base64(image_url):
 
 def bestemming_kaartje(row):
     foto_url = row.get('foto', '').strip()
-    # Open een div met styling
-    st.markdown(
-        """
-        <div style='border:1px solid #ddd; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.1); background-color: #18181b;'>
-            <div style='display: flex; align-items: center;'>
-        """,
-        unsafe_allow_html=True
-    )
+    # Afbeelding in base64 inladen
+    img_block = ""
     if foto_url:
         img_b64 = image_to_base64(foto_url)
         if img_b64:
-            st.markdown(
-                f'<img src="{img_b64}" width="120" style="border-radius:8px; margin-right:25px;" />',
-                unsafe_allow_html=True
-            )
+            img_block = f'<img src="{img_b64}" width="120" style="border-radius:8px; margin-right:25px;" />'
         else:
-            st.markdown(
-                "<div style='width:120px; height:90px; background:#444; border-radius:8px; margin-right:25px;'></div>",
-                unsafe_allow_html=True
-            )
+            img_block = "<div style='width:120px; height:90px; background:#444; border-radius:8px; margin-right:25px;'></div>"
     else:
-        st.markdown(
-            "<div style='width:120px; height:90px; background:#444; border-radius:8px; margin-right:25px;'></div>",
-            unsafe_allow_html=True
-        )
-    # Informatie
-    st.markdown(
-        f"""
-            <div>
-                <h3 style='margin-bottom: 5px; margin-top:0px;'>{row['land / regio']}</h3>
-                <div style='margin-bottom: 6px;'>{row.get('opmerking', '') or ''}</div>
-                <div style='margin-bottom: 3px;'><b>Prijs:</b> €{row.get('budget', '')}</div>
-                <div style='margin-bottom: 3px;'><b>Duur:</b> {row.get('minimum duur', '')} - {row.get('maximum duur', '')} dagen</div>
-            </div>
+        img_block = "<div style='width:120px; height:90px; background:#444; border-radius:8px; margin-right:25px;'></div>"
+
+    kaart_html = f"""
+    <div style='border:1px solid #ddd; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.1); background-color: #18181b; display: flex; align-items: center;'>
+        {img_block}
+        <div>
+            <h3 style='margin-bottom: 5px; margin-top:0px; color:#fff;'>{row['land / regio']}</h3>
+            <div style='margin-bottom: 6px; color:#fff;'>{row.get('opmerking', '') or ''}</div>
+            <div style='margin-bottom: 3px; color:#fff;'><b>Prijs:</b> €{row.get('budget', '')}</div>
+            <div style='margin-bottom: 3px; color:#fff;'><b>Duur:</b> {row.get('minimum duur', '')} - {row.get('maximum duur', '')} dagen</div>
         </div>
-        </div>
-        """, unsafe_allow_html=True
-    )
+    </div>
+    """
+
+    st.markdown(kaart_html, unsafe_allow_html=True)
 
 def main():
     st.title("Ideale Reislocatie Zoeker")
