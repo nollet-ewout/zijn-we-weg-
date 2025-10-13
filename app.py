@@ -93,7 +93,7 @@ def image_to_base64(image_url):
 
 def bestemming_kaartje(row):
     foto_url = row.get('foto', '').strip()
-    # Afbeelding in base64 inladen
+    url = row.get('url', '').strip()
     img_block = ""
     if foto_url:
         img_b64 = image_to_base64(foto_url)
@@ -104,11 +104,17 @@ def bestemming_kaartje(row):
     else:
         img_block = "<div style='width:120px; height:90px; background:#444; border-radius:8px; margin-right:25px;'></div>"
 
+    # Maak naam klikbare link als URL bestaat
+    if url:
+        naam_html = f'<a href="{url}" target="_blank" style="color:#1e90ff; text-decoration:none;">{row["land / regio"]}</a>'
+    else:
+        naam_html = f'<span style="color:#fff;">{row["land / regio"]}</span>'
+
     kaart_html = f"""
     <div style='border:1px solid #ddd; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.1); background-color: #18181b; display: flex; align-items: center;'>
         {img_block}
         <div>
-            <h3 style='margin-bottom: 5px; margin-top:0px; color:#fff;'>{row['land / regio']}</h3>
+            <h3 style='margin-bottom: 5px; margin-top:0px;'>{naam_html}</h3>
             <div style='margin-bottom: 6px; color:#fff;'>{row.get('opmerking', '') or ''}</div>
             <div style='margin-bottom: 3px; color:#fff;'><b>Prijs:</b> €{row.get('budget', '')}</div>
             <div style='margin-bottom: 3px; color:#fff;'><b>Duur:</b> {row.get('minimum duur', '')} - {row.get('maximum duur', '')} dagen</div>
