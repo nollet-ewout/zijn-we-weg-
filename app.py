@@ -168,7 +168,7 @@ def main():
             for s in item.split(';'):
                 seizoen_split.add(s.strip())
         seizoen_options = sorted(seizoen_split)
-        seizoen = st.multiselect('In welk seizoen wil je reizen? (Meerdere mogelijk)', seizoen_options)
+        seizoen = st.multiselect('In welk seizoen wil je reizen?', seizoen_options)
 
         accommodatie_options = sorted(data['accommodatie'].dropna().unique())
         accommodatie = st.multiselect('Welke type accommodatie wil je?', accommodatie_options)
@@ -187,4 +187,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
