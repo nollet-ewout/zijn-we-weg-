@@ -42,7 +42,6 @@ def load_data_from_gsheets():
         st.error("Geen data gevonden in Google Sheet.")
         return pd.DataFrame()
 
-    # Normaliseer rijen naar dezelfde lengte als header
     num_cols = len(values[0])
     normalized_values = []
     for row in values[1:]:
@@ -88,42 +87,50 @@ def image_to_base64(image_url):
         response.raise_for_status()
         img_bytes = response.content
         encoded = base64.b64encode(img_bytes).decode()
-        # Voorkom problemen met verschillende image types, hier jpg als voorbeeld.
         return f"data:image/jpeg;base64,{encoded}"
     except Exception:
         return None
 
 def bestemming_kaartje(row):
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        foto_url = row.get('foto', '').strip()
-        if foto_url:
-            img_b64 = image_to_base64(foto_url)
-            if img_b64:
-                st.markdown(
-                    f'<img src="{img_b64}" width="120" style="border-radius:8px;" />',
-                    unsafe_allow_html=True
-                )
-            else:
-                st.write("Foto niet beschikbaar")
+    foto_url = row.get('foto', '').strip()
+    # Open een div met styling
+    st.markdown(
+        """
+        <div style='border:1px solid #ddd; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.1); background-color: #18181b;'>
+            <div style='display: flex; align-items: center;'>
+        """,
+        unsafe_allow_html=True
+    )
+    if foto_url:
+        img_b64 = image_to_base64(foto_url)
+        if img_b64:
+            st.markdown(
+                f'<img src="{img_b64}" width="120" style="border-radius:8px; margin-right:25px;" />',
+                unsafe_allow_html=True
+            )
         else:
-            st.write("Geen foto beschikbaar")
-    with col2:
-        st.markdown(f"### {row['land / regio']}")
-        uitleg = row.get('opmerking', '') or ''
-        st.write(uitleg)
-        
-        prijs = row.get('budget')
-        if pd.notna(prijs) and prijs != '':
-            st.markdown(f"**Prijs:** €{prijs}")
-        
-        duur_min = row.get('minimum duur')
-        duur_max = row.get('maximum duur')
-        if pd.notna(duur_min) and pd.notna(duur_max):
-            if duur_min == duur_max:
-                st.markdown(f"**Duur:** {duur_min} dagen")
-            else:
-                st.markdown(f"**Duur:** {duur_min} - {duur_max} dagen")
+            st.markdown(
+                "<div style='width:120px; height:90px; background:#444; border-radius:8px; margin-right:25px;'></div>",
+                unsafe_allow_html=True
+            )
+    else:
+        st.markdown(
+            "<div style='width:120px; height:90px; background:#444; border-radius:8px; margin-right:25px;'></div>",
+            unsafe_allow_html=True
+        )
+    # Informatie
+    st.markdown(
+        f"""
+            <div>
+                <h3 style='margin-bottom: 5px; margin-top:0px;'>{row['land / regio']}</h3>
+                <div style='margin-bottom: 6px;'>{row.get('opmerking', '') or ''}</div>
+                <div style='margin-bottom: 3px;'><b>Prijs:</b> €{row.get('budget', '')}</div>
+                <div style='margin-bottom: 3px;'><b>Duur:</b> {row.get('minimum duur', '')} - {row.get('maximum duur', '')} dagen</div>
+            </div>
+        </div>
+        </div>
+        """, unsafe_allow_html=True
+    )
 
 def main():
     st.title("Ideale Reislocatie Zoeker")
@@ -164,15 +171,7 @@ def main():
 
     if not filtered_data.empty:
         for _, row in filtered_data.iterrows():
-            with st.container():
-                st.markdown(
-                    """
-                    <div style='border:1px solid #ddd; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.1);'>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-                bestemming_kaartje(row)
+            bestemming_kaartje(row)
     else:
         st.write("Geen locaties gevonden.")
 
