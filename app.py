@@ -32,7 +32,7 @@ def load_data_from_gsheets():
     sheet = service.spreadsheets()
 
     try:
-        result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Opties!A1:P").execute()
+        result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Opties!A1:M").execute()
         values = result.get('values', [])
     except Exception as e:
         st.error(f"Error bij ophalen data van Google Sheets: {e}")
@@ -103,20 +103,23 @@ def bestemming_kaartje(row):
     if foto_url:
         img_b64 = image_to_base64(foto_url)
         if img_b64:
-            img_block = f'<img src="{img_b64}" width="120" style="border-radius:8px; margin-right:25px;" />'
+            # Grotere afbeelding, rechts uitlijnen met margin-left voor ruimte tussen tekst en foto
+            img_block = f'<img src="{img_b64}" width="200" style="border-radius:8px; float:right; margin-left:20px;" />'
         else:
-            img_block = "<div style='width:120px; height:90px; background:#444; border-radius:8px; margin-right:25px;'></div>"
+            img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right; margin-left:20px;'></div>"
     else:
-        img_block = "<div style='width:120px; height:90px; background:#444; border-radius:8px; margin-right:25px;'></div>"
+        img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right; margin-left:20px;'></div>"
 
-    naam_html = f'<a href="{url}" target="_blank" style="color:#1e90ff; text-decoration:none;">{row["land / regio"]}</a>' if url else f'<span style="color:#fff;">{row["land / regio"]}</span>'
+    if url:
+        naam_html = f'<a href="{url}" target="_blank" style="color:#1e90ff; text-decoration:none;">{row["land / regio"]}</a>'
+    else:
+        naam_html = f'<span style="color:#fff;">{row["land / regio"]}</span>'
 
     kaart_html = f"""
-    <div style='border:1px solid #ddd; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.1);
-    background-color: #18181b; display: flex; align-items: center;'>
+    <div style='border:1px solid #ddd; border-radius:8px; padding:20px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.2); background-color: #18181b; overflow: auto;'>
         {img_block}
-        <div>
-            <h3 style='margin-bottom: 5px; margin-top:0px;'>{naam_html}</h3>
+        <div style="text-align:left;">
+            <h3 style='margin-bottom: 5px; margin-top:0px; color:#fff;'>{naam_html}</h3>
             <div style='margin-bottom: 6px; color:#fff;'>{row.get('opmerking', '') or ''}</div>
             <div style='margin-bottom: 3px; color:#fff;'><b>Prijs:</b> €{row.get('budget', '')}</div>
             <div style='margin-bottom: 3px; color:#fff;'><b>Duur:</b> {row.get('minimum duur', '')} - {row.get('maximum duur', '')} dagen</div>
@@ -125,6 +128,7 @@ def bestemming_kaartje(row):
         </div>
     </div>
     """
+
     st.markdown(kaart_html, unsafe_allow_html=True)
 
 def main():
@@ -184,5 +188,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
