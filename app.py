@@ -103,28 +103,27 @@ def bestemming_kaartje(row):
     if foto_url:
         img_b64 = image_to_base64(foto_url)
         if img_b64:
-            # Grotere afbeelding, rechts uitlijnen met margin-left voor ruimte tussen tekst en foto
-            img_block = f'<img src="{img_b64}" width="200" style="border-radius:8px; float:right; margin-left:20px;" />'
+            img_block = f'<img src="{img_b64}" width="200" style="border-radius:8px; float:right; margin-left:30px; margin-top:5px; margin-bottom:5px;" />'
         else:
-            img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right; margin-left:20px;'></div>"
+            img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right; margin-left:30px; margin-top:5px; margin-bottom:5px;'></div>"
     else:
-        img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right; margin-left:20px;'></div>"
+        img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right; margin-left:30px; margin-top:5px; margin-bottom:5px;'></div>"
 
     if url:
         naam_html = f'<a href="{url}" target="_blank" style="color:#1e90ff; text-decoration:none;">{row["land / regio"]}</a>'
     else:
-        naam_html = f'<span style="color:#fff;">{row["land / regio"]}</span>'
+        naam_html = f'<span style="color:#fff; font-weight:bold;">{row["land / regio"]}</span>'
 
     kaart_html = f"""
-    <div style='border:1px solid #ddd; border-radius:8px; padding:20px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.2); background-color: #18181b; overflow: auto;'>
+    <div style='border:1px solid #ddd; border-radius:8px; padding:20px 25px 20px 25px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.2); background-color: #18181b; overflow: auto;'>
         {img_block}
-        <div style="text-align:left;">
-            <h3 style='margin-bottom: 5px; margin-top:0px; color:#fff;'>{naam_html}</h3>
-            <div style='margin-bottom: 6px; color:#fff;'>{row.get('opmerking', '') or ''}</div>
-            <div style='margin-bottom: 3px; color:#fff;'><b>Prijs:</b> €{row.get('budget', '')}</div>
-            <div style='margin-bottom: 3px; color:#fff;'><b>Duur:</b> {row.get('minimum duur', '')} - {row.get('maximum duur', '')} dagen</div>
-            <div style='margin-bottom: 3px; color:#fff;'><b>Temperatuur:</b> {row.get('temperatuur', '')} °C</div>
-            <div style='margin-bottom: 3px; color:#fff;'><b>Vervoersmiddel:</b> {row.get('vervoersmiddel', '')}</div>
+        <div style="text-align:left; max-width: calc(100% - 250px);">
+            <h3 style='margin-bottom: 10px; margin-top:0px; color:#fff;'>{naam_html}</h3>
+            <div style='margin-left: 15px; margin-bottom: 10px; color:#ccc; font-style: italic;'>{row.get('opmerking', '') or ''}</div>
+            <div style='margin-bottom: 6px; color:#fff;'><b>Prijs:</b> €{row.get('budget', '')}</div>
+            <div style='margin-bottom: 6px; color:#fff;'><b>Duur:</b> {row.get('minimum duur', '')} - {row.get('maximum duur', '')} dagen</div>
+            <div style='margin-bottom: 6px; color:#fff;'><b>Temperatuur:</b> {row.get('temperatuur', '')} °C</div>
+            <div style='margin-bottom: 6px; color:#fff;'><b>Vervoersmiddel:</b> {row.get('vervoersmiddel', '')}</div>
         </div>
     </div>
     """
