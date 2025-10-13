@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+import base64
+import requests
 
 def get_gsheets_service():
     credentials_info = {
@@ -40,7 +42,15 @@ def load_data_from_gsheets():
         st.error("Geen data gevonden in Google Sheet.")
         return pd.DataFrame()
 
-    df = pd.DataFrame(values[1:], columns=values[0])
+    # Normaliseer rijen naar dezelfde lengte als header
+    num_cols = len(values[0])
+    normalized_values = []
+    for row in values[1:]:
+        if len(row) < num_cols:
+            row += [''] * (num_cols - len(row))
+        normalized_values.append(row)
+
+    df = pd.DataFrame(normalized_values, columns=values[0])
     df.columns = df.columns.str.strip().str.lower()
 
     for col in ['minimum duur', 'maximum duur', 'budget']:
@@ -72,11 +82,30 @@ def filter_data(df, duur_slider, budget_slider, continent, reistype, seizoen, ac
 
     return df
 
+def image_to_base64(image_url):
+    try:
+        response = requests.get(image_url)
+        response.raise_for_status()
+        img_bytes = response.content
+        encoded = base64.b64encode(img_bytes).decode()
+        # Voorkom problemen met verschillende image types, hier jpg als voorbeeld.
+        return f"data:image/jpeg;base64,{encoded}"
+    except Exception:
+        return None
+
 def bestemming_kaartje(row):
     col1, col2 = st.columns([1, 2])
     with col1:
-        if pd.notna(row.get('foto')) and row['foto'].strip() != '':
-            st.image(row['foto'], width=120)
+        foto_url = row.get('foto', '').strip()
+        if foto_url:
+            img_b64 = image_to_base64(foto_url)
+            if img_b64:
+                st.markdown(
+                    f'<img src="{img_b64}" width="120" style="border-radius:8px;" />',
+                    unsafe_allow_html=True
+                )
+            else:
+                st.write("Foto niet beschikbaar")
         else:
             st.write("Geen foto beschikbaar")
     with col2:
@@ -85,7 +114,7 @@ def bestemming_kaartje(row):
         st.write(uitleg)
         
         prijs = row.get('budget')
-        if pd.notna(prijs):
+        if pd.notna(prijs) and prijs != '':
             st.markdown(f"**Prijs:** €{prijs}")
         
         duur_min = row.get('minimum duur')
