@@ -4,7 +4,6 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import base64
 import requests
-from jinja2 import Template
 
 def get_gsheets_service():
     credentials_info = {
@@ -97,33 +96,43 @@ def image_to_base64(image_url):
     except Exception:
         return None
 
-@st.cache_resource
-def load_template():
-    with open('UI/kaartje.html', 'r', encoding='utf-8') as f:
-        template_str = f.read()
-    return Template(template_str)
-
-def bestemming_kaartje(row, template):
+def bestemming_kaartje(row):
     foto_url = row.get('foto', '').strip()
     url = row.get('url', '').strip()
-    img_b64 = image_to_base64(foto_url) if foto_url else None
+    img_block = ""
+    if foto_url:
+        img_b64 = image_to_base64(foto_url)
+        if img_b64:
+            img_block = f'<img src="{img_b64}" width="200" style="border-radius:8px; float:right; margin-left:30px; margin-top:5px; margin-bottom:5px;" />'
+        else:
+            img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right; margin-left:30px; margin-top:5px; margin-bottom:5px;'></div>"
+    else:
+        img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right; margin-left:30px; margin-top:5px; margin-bottom:5px;'></div>"
+
+    if url:
+        naam_html = f'<a href="{url}" target="_blank" style="color:#1e90ff; text-decoration:none;">{row["land / regio"]}</a>'
+    else:
+        naam_html = f'<span style="color:#fff; font-weight:bold;">{row["land / regio"]}</span>'
 
     vervoersmiddel_raw = row.get('vervoersmiddel', '')
     vervoersmiddelen_list = [v.strip() for v in vervoersmiddel_raw.split(';') if v.strip()]
-    vervoersmiddelen = ', '.join(vervoersmiddelen_list)
+    vervoersmiddel_clean = ', '.join(vervoersmiddelen_list)
 
-    html_rendered = template.render(
-        foto_b64=img_b64,
-        url=url,
-        naam=row["land / regio"],
-        opmerking=row.get('opmerking', '') or '',
-        budget=row.get('budget', ''),
-        minimum_duur=row.get('minimum duur', ''),
-        maximum_duur=row.get('maximum duur', ''),
-        temperatuur=row.get('temperatuur', ''),
-        vervoersmiddelen=vervoersmiddelen
-    )
-    st.markdown(html_rendered, unsafe_allow_html=True)  # <- Dit zorgt dat HTML ge-renderd wordt
+    kaart_html = f"""
+    <div style='border:1px solid #ddd; border-radius:8px; padding:20px 25px 20px 25px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.2); background-color: #18181b; overflow: auto;'>
+        {img_block}
+        <div style="text-align:left; max-width: calc(100% - 250px);">
+            <h3 style='margin-bottom: 10px; margin-top:0px; color:#fff;'>{naam_html}</h3>
+            <div style='margin-left: 15px; margin-bottom: 10px; color:#ccc; font-style: italic;'>{row.get('opmerking', '') or ''}</div>
+            <div style='margin-bottom: 6px; color:#fff;'><b>Prijs:</b> €{row.get('budget', '')}</div>
+            <div style='margin-bottom: 6px; color:#fff;'><b>Duur:</b> {row.get('minimum duur', '')} - {row.get('maximum duur', '')} dagen</div>
+            <div style='margin-bottom: 6px; color:#fff;'><b>Temperatuur:</b> {row.get('temperatuur', '')} °C</div>
+            <div style='margin-bottom: 6px; color:#fff;'><b>Vervoersmiddel:</b> {vervoersmiddel_clean}</div>
+        </div>
+    </div>
+    """
+
+    st.markdown(kaart_html, unsafe_allow_html=True)
 
 def main():
     st.title("Ideale Reislocatie Zoeker")
@@ -145,8 +154,6 @@ def main():
         for row in data['vervoersmiddel'].dropna()
         for v in row.split(';')
     )) if 'vervoersmiddel' in data.columns else []
-
-    template = load_template()
 
     with st.sidebar:
         duur_slider = st.slider('Hoe lang wil je weg? (dagen)', min_duur, max_duur, (min_duur, max_duur), step=1)
@@ -178,7 +185,7 @@ def main():
 
     if not filtered_data.empty:
         for _, row in filtered_data.iterrows():
-            bestemming_kaartje(row, template)
+            bestemming_kaartje(row)
     else:
         st.write("Geen locaties gevonden.")
 
