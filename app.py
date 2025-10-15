@@ -26,6 +26,17 @@ def get_gsheets_service():
     service = build('sheets', 'v4', credentials=credentials)
     return service
 
+import streamlit as st
+
+html_string = """
+<div style='background:#222; color:#fff; padding:20px; border-radius:10px;'>
+    <h3>Testlocatie</h3>
+    <p>Deze tekst zou mooi gestyled moeten verschijnen.</p>
+</div>
+"""
+st.markdown(html_string, unsafe_allow_html=True)
+
+
 @st.cache_data
 def load_data_from_gsheets():
     service = get_gsheets_service()
@@ -185,3 +196,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
