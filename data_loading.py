@@ -1,3 +1,10 @@
+import streamlit as st
+import pandas as pd
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+import requests
+import base64
+
 # --- Cached data loading ---
 @st.cache_data(ttl=600)
 def load_travel_data():
