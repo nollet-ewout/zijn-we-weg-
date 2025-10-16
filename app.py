@@ -1,11 +1,4 @@
 import streamlit as st
-import pandas as pd
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
-import base64
-import requests
-from fpdf import FPDF
-import io
 
 from gsheets_service import get_gsheets_service
 from data_loading import load_travel_data, load_restaurants_data
@@ -13,6 +6,7 @@ from filters import filter_travel_in_memory, filter_restaurants_in_memory
 from kaartweergave import bestemming_kaartje, restaurant_kaartje
 from pdf_export import create_pdf_from_weekplanning
 from plan_je_dag import plan_je_dag_tab
+
 
 def main():
     if 'needs_refresh' not in st.session_state:
@@ -138,4 +132,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
