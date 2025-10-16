@@ -5,6 +5,8 @@ from googleapiclient.discovery import build
 import requests
 import base64
 
+from gsheets_service import get_gsheets_service
+
 # --- Cached data loading ---
 @st.cache_data(ttl=600)
 def load_travel_data():
