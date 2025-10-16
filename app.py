@@ -26,7 +26,7 @@ def get_gsheets_service():
     service = build('sheets', 'v4', credentials=credentials)
     return service
 
-# --- Cached data loading ---
+# --- Cached data loading met 10 min TTL ---
 @st.cache_data(ttl=600)
 def load_travel_data():
     service = get_gsheets_service()
@@ -76,7 +76,6 @@ def load_restaurants_data():
     df.columns = df.columns.str.strip().str.lower()
     return df
 
-# --- Cache image base64 conversions per url ---
 @st.cache_data(ttl=600)
 def image_to_base64_cached(image_url):
     try:
@@ -88,7 +87,7 @@ def image_to_base64_cached(image_url):
     except Exception:
         return None
 
-# --- Filtering Travel Data in-memory ---
+# --- Filtering functies blijven ongewijzigd, werkend op ingeladen dataframes ---
 def filter_travel_in_memory(df, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie, temp_slider, vervoersmiddelen):
     df = df.dropna(subset=['budget', 'minimum duur', 'maximum duur'])
     df = df[
@@ -111,7 +110,6 @@ def filter_travel_in_memory(df, duur_slider, budget_slider, continent, reistype,
         df = df[df['vervoersmiddel'].apply(lambda x: any(vm.strip() in x.split(';') for vm in vervoersmiddelen))]
     return df
 
-# --- Filtering Restaurants Data in-memory ---
 def filter_restaurants_in_memory(df, keuken, locaties, prijs_range):
     if keuken:
         df = df[df['keuken'].isin(keuken)]
@@ -121,7 +119,7 @@ def filter_restaurants_in_memory(df, keuken, locaties, prijs_range):
         df = df[df['prijs'].apply(lambda p: len(p.strip()) >= prijs_range[0] and len(p.strip()) <= prijs_range[1])]
     return df
 
-# --- Travel Card ---
+# --- Kaartweergaves ---
 def bestemming_kaartje(row):
     foto_url = row.get('foto', '').strip()
     url = row.get('url', '').strip()
@@ -151,7 +149,6 @@ def bestemming_kaartje(row):
     """
     st.markdown(kaart_html, unsafe_allow_html=True)
 
-# --- Restaurant Card ---
 def restaurant_kaartje(row):
     foto_url = row.get('foto', '').strip()
     url = row.get('url', '').strip()
@@ -180,12 +177,50 @@ def restaurant_kaartje(row):
     st.markdown(kaart_html, unsafe_allow_html=True)
 
 def main():
+    if 'needs_refresh' not in st.session_state:
+        st.session_state['needs_refresh'] = False
+
     tab_names = ["Reislocaties", "Restaurants"]
     selected_tab = st.sidebar.radio("Selecteer tabblad", tab_names)
 
-    # Titel dynamisch
     titel = "Ideale " + selected_tab + " Zoeker"
     st.title(titel)
+
+    def on_refresh_click():
+        load_travel_data.clear()
+        load_restaurants_data.clear()
+        st.session_state['needs_refresh'] = True
+
+    col1, col2 = st.columns([8, 1])
+    with col1:
+        if selected_tab == "Reislocaties":
+            st.markdown("### Geselecteerde locaties:")
+        else:
+            st.markdown("### Geselecteerde restaurants:")
+
+    with col2:
+        st.button("🔄", on_click=on_refresh_click, key="refresh_button")
+        st.markdown("""
+        <style>
+        button[kind=primary] > div[role=button] {
+            font-size: 24px;
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            margin-left: auto;
+            cursor: pointer;
+        }
+        button[kind=primary]:hover > div[role=button] {
+            color: #1e90ff;
+            transform: rotate(90deg);
+            transition: transform 0.3s ease-in-out;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+    if st.session_state['needs_refresh']:
+        st.session_state['needs_refresh'] = False
+        st.rerun()
 
     if selected_tab == "Reislocaties":
         data = load_travel_data()
@@ -225,40 +260,13 @@ def main():
 
         filtered_data = filter_travel_in_memory(data, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie, temp_slider, vervoersmiddelen)
 
-        col1, col2 = st.columns([8, 1])
-        with col1:
-            st.markdown("### Geselecteerde locaties:")
-        with col2:
-            refresh_clicked = st.button("🔄", key="refresh_travel")
-            st.markdown("""
-            <style>
-            button[kind=primary] > div[role=button] {
-                font-size: 24px;
-                background-color: transparent;
-                border: none;
-                padding: 0;
-                margin-left: auto;
-                cursor: pointer;
-            }
-            button[kind=primary]:hover > div[role=button] {
-                color: #1e90ff;
-                transform: rotate(90deg);
-                transition: transform 0.3s ease-in-out;
-            }
-            </style>
-            """, unsafe_allow_html=True)
-            if refresh_clicked:
-                load_travel_data.clear()
-                load_restaurants_data.clear()
-                st.rerun()
-
         if not filtered_data.empty:
             for _, row in filtered_data.iterrows():
                 bestemming_kaartje(row)
         else:
             st.write("Geen locaties gevonden.")
 
-    else:  # Restaurants tab
+    else:
         restaurants = load_restaurants_data()
         if restaurants.empty:
             st.warning("Geen restaurantdata beschikbaar.")
@@ -274,33 +282,6 @@ def main():
 
         filtered_restaurants = filter_restaurants_in_memory(restaurants, selected_keuken, selected_locaties, prijs_slider)
 
-        col1, col2 = st.columns([8, 1])
-        with col1:
-            st.markdown("### Geselecteerde restaurants:")
-        with col2:
-            refresh_clicked = st.button("🔄", key="refresh_restaurants")
-            st.markdown("""
-            <style>
-            button[kind=primary] > div[role=button] {
-                font-size: 24px;
-                background-color: transparent;
-                border: none;
-                padding: 0;
-                margin-left: auto;
-                cursor: pointer;
-            }
-            button[kind=primary]:hover > div[role=button] {
-                color: #1e90ff;
-                transform: rotate(90deg);
-                transition: transform 0.3s ease-in-out;
-            }
-            </style>
-            """, unsafe_allow_html=True)
-            if refresh_clicked:
-                load_travel_data.clear()
-                load_restaurants_data.clear()
-                st.rerun()
-
         if not filtered_restaurants.empty:
             for _, row in filtered_restaurants.iterrows():
                 restaurant_kaartje(row)
@@ -309,5 +290,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
