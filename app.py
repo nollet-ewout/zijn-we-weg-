@@ -101,11 +101,11 @@ def filter_travel(df, duur_slider, budget_slider, continent, reistype, seizoen, 
     return df
 
 # --- Filtering Restaurants ---
-def filter_restaurants(df, keuken, locatie, prijs_range):
+def filter_restaurants(df, keuken, locaties, prijs_range):
     if keuken:
         df = df[df['keuken'].isin(keuken)]
-    if locatie:
-        df = df[df['locatie'].str.contains(locatie, case=False, na=False)]
+    if locaties:
+        df = df[df['locatie'].isin(locaties)]
     if prijs_range:
         df = df[df['prijs'].apply(lambda p: len(p.strip()) >= prijs_range[0] and len(p.strip()) <= prijs_range[1])]
     return df
@@ -236,10 +236,13 @@ def main():
 
         keuken_options = sorted(restaurants['keuken'].dropna().unique())
         selected_keuken = st.sidebar.multiselect("Kies type keuken", keuken_options)
-        locatie_input = st.sidebar.text_input("Voer een locatie in (stad of regio)")
+
+        locatie_options = sorted(restaurants['locatie'].dropna().unique())
+        selected_locaties = st.sidebar.multiselect("Selecteer locatie(s)", locatie_options)
+
         prijs_slider = st.sidebar.slider("Prijsniveau (€ - €€€€)", 1, 4, (1, 4), step=1)
 
-        filtered_restaurants = filter_restaurants(restaurants, selected_keuken, locatie_input, prijs_slider)
+        filtered_restaurants = filter_restaurants(restaurants, selected_keuken, selected_locaties, prijs_slider)
 
         st.write("### Geselecteerde restaurants:")
         if not filtered_restaurants.empty:
