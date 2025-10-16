@@ -27,7 +27,7 @@ def get_gsheets_service():
     return service
 
 # --- Cached data loading ---
-@st.cache_data
+@st.cache_data(ttl=600)
 def load_travel_data():
     service = get_gsheets_service()
     spreadsheet_id = st.secrets["spreadsheet_id"]
@@ -53,7 +53,7 @@ def load_travel_data():
             df[col] = pd.to_numeric(df[col], errors='coerce')
     return df
 
-@st.cache_data
+@st.cache_data(ttl=600)
 def load_restaurants_data():
     service = get_gsheets_service()
     spreadsheet_id = st.secrets["spreadsheet_id"]
@@ -77,7 +77,7 @@ def load_restaurants_data():
     return df
 
 # --- Cache image base64 conversions per url ---
-@st.cache_data
+@st.cache_data(ttl=600)
 def image_to_base64_cached(image_url):
     try:
         response = requests.get(image_url)
@@ -309,3 +309,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
