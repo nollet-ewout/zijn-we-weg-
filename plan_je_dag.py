@@ -1,5 +1,4 @@
 import streamlit as st
-
 from pdf_export import create_pdf_from_weekplanning
 
 # --- Plan je dag tab ---
@@ -43,20 +42,19 @@ def plan_je_dag_tab(reizen_df, restaurants_df):
             st.session_state['weekplanning'].append(dag)
             st.success(f"Dag {len(st.session_state['weekplanning'])} toegevoegd!")
 
-        if st.session_state['weekplanning']:
-            st.markdown("## Overzicht weekplanning")
-            for i, dag in enumerate(st.session_state['weekplanning'], 1):
-                st.markdown(f"### Dag {i} - {dag['bestemming']}")
-                ontbijt = dag['ontbijt'] or "geen geselecteerd"
-                lunch = dag['lunch'] or "geen geselecteerd"
-                diner = dag['diner'] or "geen geselecteerd"
-                st.markdown(f"Ontbijt: {ontbijt}  \nLunch: {lunch}  \nDiner: {diner}")
+    if st.session_state['weekplanning']:
+        st.markdown("## Overzicht weekplanning")
+        for i, dag in enumerate(st.session_state['weekplanning'], 1):
+            st.markdown(f"### Dag {i} - {dag['bestemming']}")
+            ontbijt = dag['ontbijt'] or "geen geselecteerd"
+            lunch = dag['lunch'] or "geen geselecteerd"
+            diner = dag['diner'] or "geen geselecteerd"
+            st.markdown(f"Ontbijt: {ontbijt}  \nLunch: {lunch}  \nDiner: {diner}")
 
-                if st.session_state['weekplanning']:
-                    pdf_buffer = create_pdf_from_weekplanning(st.session_state['weekplanning'])
-                    st.download_button(
-                        label="Download PDF",
-                        data=pdf_buffer,
-                        file_name="weekplanning.pdf",
-                        mime="application/pdf"
-                    )
+        pdf_buffer = create_pdf_from_weekplanning(st.session_state['weekplanning'])
+        st.download_button(
+            label="Download PDF",
+            data=pdf_buffer,
+            file_name="weekplanning.pdf",
+            mime="application/pdf"
+        )
