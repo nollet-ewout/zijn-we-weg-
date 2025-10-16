@@ -4,6 +4,8 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import base64
 import requests
+from fpdf import FPDF
+import io
 
 # --- Google Sheets Service Setup ---
 def get_gsheets_service():
@@ -26,7 +28,7 @@ def get_gsheets_service():
     service = build('sheets', 'v4', credentials=credentials)
     return service
 
-# --- Cached data loading met 10min TTL ---
+# --- Cached data loading ---
 @st.cache_data(ttl=600)
 def load_travel_data():
     service = get_gsheets_service()
@@ -176,23 +178,40 @@ def restaurant_kaartje(row):
     """
     st.markdown(kaart_html, unsafe_allow_html=True)
 
+# --- PDF export functie ---
+def create_pdf_from_weekplanning(weekplanning):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, "Weekplanning Reis en Restaurants", ln=True, align="C")
+    pdf.ln(10)
+    for i, dag in enumerate(weekplanning, 1):
+        text = (
+            f"Dag {i}: {dag['bestemming']}  \n"
+            f"  Ontbijt: {dag.get('ontbijt','geen geselecteerd')}\n"
+            f"  Lunch: {dag.get('lunch','geen geselecteerd')}\n"
+            f"  Diner: {dag.get('diner','geen geselecteerd')}\n"
+        )
+        pdf.multi_cell(0, 10, text)
+        pdf.ln(5)
+    buf = io.BytesIO()
+    pdf.output(buf)
+    buf.seek(0)
+    return buf
+
 # --- Plan je dag tab ---
 def plan_je_dag_tab(reizen_df, restaurants_df):
     st.header("Plan je ideale dag")
 
-    # Initializeer weekplanning in session_state
     if 'weekplanning' not in st.session_state:
         st.session_state['weekplanning'] = []
 
-    # Kies bestemming
     locaties = sorted(reizen_df['land / regio'].dropna().unique())
     gekozen_locatie = st.selectbox("Kies je bestemming", locaties)
 
     if gekozen_locatie:
-        # Filter restaurants op locatie
         restaurants_locatie = restaurants_df[restaurants_df['locatie'].str.contains(gekozen_locatie, case=False, na=False)]
 
-        # Check of 'maaltijd' kolom bestaat
         if 'maaltijd' in restaurants_locatie.columns:
             ontbijt_restaurants = restaurants_locatie[
                 restaurants_locatie['maaltijd'].str.contains("ontbijt", case=False, na=False)
@@ -207,13 +226,11 @@ def plan_je_dag_tab(reizen_df, restaurants_df):
             ontbijt_restaurants = lunch_restaurants = diner_restaurants = []
             st.warning("De kolom 'maaltijd' ontbreekt in je restaurantgegevens.")
 
-        # Kies restaurants met selectbox
         ontbijt_keuze = st.selectbox("Ontbijt restaurant", ["- geen -"] + ontbijt_restaurants)
         lunch_keuze = st.selectbox("Lunch restaurant", ["- geen -"] + lunch_restaurants)
         diner_keuze = st.selectbox("Diner restaurant", ["- geen -"] + diner_restaurants)
 
-        # Toevoegen knop
-        if st.button("Toevoegen aan weekplan"):
+        if st.button("Toevoegen aan weekplanning"):
             dag = {
                 "bestemming": gekozen_locatie,
                 "ontbijt": ontbijt_keuze if ontbijt_keuze != "- geen -" else None,
@@ -223,15 +240,23 @@ def plan_je_dag_tab(reizen_df, restaurants_df):
             st.session_state['weekplanning'].append(dag)
             st.success(f"Dag {len(st.session_state['weekplanning'])} toegevoegd!")
 
-        # Visuele overzicht weekplan
         if st.session_state['weekplanning']:
-            st.markdown("## Overzicht weekplan")
-            for i, dag in enumerate(st.session_state['weekplanning'], start=1):
+            st.markdown("## Overzicht weekplanning")
+            for i, dag in enumerate(st.session_state['weekplanning'], 1):
                 st.markdown(f"### Dag {i} - {dag['bestemming']}")
                 ontbijt = dag['ontbijt'] or "geen geselecteerd"
                 lunch = dag['lunch'] or "geen geselecteerd"
                 diner = dag['diner'] or "geen geselecteerd"
-                st.markdown(f"Ontbijt: {ontbijt}\nLunch: {lunch}\nDiner: {diner}")
+                st.markdown(f"Ontbijt: {ontbijt}  \nLunch: {lunch}  \nDiner: {diner}")
+
+            if st.button("Exporteer weekplanning naar PDF"):
+                pdf_buffer = create_pdf_from_weekplanning(st.session_state['weekplanning'])
+                st.download_button(
+                    label="Download PDF",
+                    data=pdf_buffer,
+                    file_name="weekplanning.pdf",
+                    mime="application/pdf"
+                )
 
 def main():
     if 'needs_refresh' not in st.session_state:
@@ -279,7 +304,7 @@ def main():
 
     if st.session_state['needs_refresh']:
         st.session_state['needs_refresh'] = False
-        st.rerun()
+        st.experimental_rerun()
 
     if selected_tab == "Reislocaties":
         data = load_travel_data()
@@ -347,7 +372,7 @@ def main():
         else:
             st.write("Geen restaurants gevonden.")
 
-    else:  # Plan je dag tab
+    else:
         reizen_df = load_travel_data()
         restaurants_df = load_restaurants_data()
         if reizen_df.empty or restaurants_df.empty:
@@ -357,6 +382,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
