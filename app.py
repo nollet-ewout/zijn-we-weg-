@@ -5,10 +5,7 @@ from googleapiclient.discovery import build
 import base64
 import requests
 
-
-# -----------------------------------------------------------
-# GOOGLE SHEETS SERVICE
-# -----------------------------------------------------------
+# --- Google Sheets Service Setup ---
 def get_gsheets_service():
     credentials_info = {
         "type": "service_account",
@@ -29,12 +26,9 @@ def get_gsheets_service():
     service = build('sheets', 'v4', credentials=credentials)
     return service
 
-
-# -----------------------------------------------------------
-# LOAD DATA - TRIPS
-# -----------------------------------------------------------
+# --- Load Travel Data ---
 @st.cache_data
-def load_data_from_gsheets():
+def load_travel_data():
     service = get_gsheets_service()
     spreadsheet_id = st.secrets["spreadsheet_id"]
     sheet = service.spreadsheets()
@@ -44,64 +38,47 @@ def load_data_from_gsheets():
     except Exception as e:
         st.error(f"Error bij ophalen data van Google Sheets: {e}")
         return pd.DataFrame()
-
     if not values:
         st.error("Geen data gevonden in Google Sheet.")
         return pd.DataFrame()
-
-    num_cols = len(values[0])
-    normalized_values = []
-    for row in values[1:]:
-        if len(row) < num_cols:
-            row += [''] * (num_cols - len(row))
-        normalized_values.append(row)
-
-    df = pd.DataFrame(normalized_values, columns=values[0])
+    cols = values[0]
+    data = values[1:]
+    for row in data:
+        if len(row) < len(cols):
+            row += [''] * (len(cols) - len(row))
+    df = pd.DataFrame(data, columns=cols)
     df.columns = df.columns.str.strip().str.lower()
-
     for col in ['minimum duur', 'maximum duur', 'budget', 'temperatuur']:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
-
     return df
 
-
-# -----------------------------------------------------------
-# LOAD DATA - RESTAURANTS
-# -----------------------------------------------------------
+# --- Load Restaurants Data ---
 @st.cache_data
-def load_restaurants_from_gsheets():
+def load_restaurants_data():
     service = get_gsheets_service()
-    spreadsheet_id = "1urbWY9gxT5gSVBwUH2CQT4qJ74XoBN8pnkeD0_BXdnQ"
+    spreadsheet_id = st.secrets["spreadsheet_id"]
     sheet = service.spreadsheets()
-
     try:
         result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Restaurants!A1:G").execute()
         values = result.get('values', [])
     except Exception as e:
         st.error(f"Error bij ophalen restaurantdata: {e}")
         return pd.DataFrame()
-
     if not values:
         st.error("Geen data gevonden in Restaurants-sheet.")
         return pd.DataFrame()
-
-    num_cols = len(values[0])
-    normalized_values = []
-    for row in values[1:]:
-        if len(row) < num_cols:
-            row += [''] * (num_cols - len(row))
-        normalized_values.append(row)
-
-    df = pd.DataFrame(normalized_values, columns=values[0])
+    cols = values[0]
+    data = values[1:]
+    for row in data:
+        if len(row) < len(cols):
+            row += [''] * (len(cols) - len(row))
+    df = pd.DataFrame(data, columns=cols)
     df.columns = df.columns.str.strip().str.lower()
     return df
 
-
-# -----------------------------------------------------------
-# FILTERS
-# -----------------------------------------------------------
-def filter_data(df, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie, temp_slider, vervoersmiddelen):
+# --- Filtering Travel ---
+def filter_travel(df, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie, temp_slider, vervoersmiddelen):
     df = df.dropna(subset=['budget', 'minimum duur', 'maximum duur'])
     df = df[
         (df['maximum duur'] >= duur_slider[0]) &
@@ -111,25 +88,19 @@ def filter_data(df, duur_slider, budget_slider, continent, reistype, seizoen, ac
     ]
     if 'temperatuur' in df.columns:
         df = df[(df['temperatuur'] >= temp_slider[0]) & (df['temperatuur'] <= temp_slider[1])]
-
     if continent:
         df = df[df['continent'].isin(continent)]
-
     if reistype:
         df = df[df['reistype / doel'].isin(reistype)]
-
     if seizoen:
         df = df[df['seizoen'].apply(lambda x: any(s in [s.strip() for s in x.split(';')] for s in seizoen))]
-
     if accommodatie:
         df = df[df['accommodatie'].isin(accommodatie)]
-
     if vervoersmiddelen:
         df = df[df['vervoersmiddel'].apply(lambda x: any(vm.strip() in x.split(';') for vm in vervoersmiddelen))]
-
     return df
 
-
+# --- Filtering Restaurants ---
 def filter_restaurants(df, keuken, locatie, prijs_range):
     if keuken:
         df = df[df['keuken'].isin(keuken)]
@@ -139,10 +110,7 @@ def filter_restaurants(df, keuken, locatie, prijs_range):
         df = df[df['prijs'].apply(lambda p: len(p.strip()) >= prijs_range[0] and len(p.strip()) <= prijs_range[1])]
     return df
 
-
-# -----------------------------------------------------------
-# IMAGE AND CARD COMPONENTS
-# -----------------------------------------------------------
+# --- Image to Base64 helper ---
 def image_to_base64(image_url):
     try:
         response = requests.get(image_url)
@@ -153,7 +121,7 @@ def image_to_base64(image_url):
     except Exception:
         return None
 
-
+# --- Travel Card ---
 def bestemming_kaartje(row):
     foto_url = row.get('foto', '').strip()
     url = row.get('url', '').strip()
@@ -166,11 +134,8 @@ def bestemming_kaartje(row):
             img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right;'></div>"
     else:
         img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right;'></div>"
-
     naam_html = f'<a href="{url}" target="_blank" style="color:#1e90ff; text-decoration:none;">{row["land / regio"]}</a>' if url else f'<span style="color:#fff; font-weight:bold;">{row["land / regio"]}</span>'
-
     vervoersmiddel_clean = ', '.join([v.strip() for v in row.get('vervoersmiddel', '').split(';') if v.strip()])
-
     kaart_html = f"""
     <div style='border:1px solid #ddd; border-radius:8px; padding:20px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.2); background-color:#18181b; overflow:auto;'>
         {img_block}
@@ -186,7 +151,7 @@ def bestemming_kaartje(row):
     """
     st.markdown(kaart_html, unsafe_allow_html=True)
 
-
+# --- Restaurant Card ---
 def restaurant_kaartje(row):
     foto_url = row.get('foto', '').strip()
     url = row.get('url', '').strip()
@@ -199,9 +164,7 @@ def restaurant_kaartje(row):
             img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right;'></div>"
     else:
         img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right;'></div>"
-
     naam_html = f'<a href="{url}" target="_blank" style="color:#1e90ff; text-decoration:none;">{row["naam"]}</a>' if url else f'<span style="color:#fff; font-weight:bold;">{row["naam"]}</span>'
-
     kaart_html = f"""
     <div style='border:1px solid #ddd; border-radius:8px; padding:20px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.2); background-color:#18181b; overflow:auto;'>
         {img_block}
@@ -216,18 +179,14 @@ def restaurant_kaartje(row):
     """
     st.markdown(kaart_html, unsafe_allow_html=True)
 
-
-# -----------------------------------------------------------
-# MAIN FUNCTION
-# -----------------------------------------------------------
+# --- Main Function ---
 def main():
     st.title("Ideale Reislocatie & Restaurant Zoeker")
 
     tab1, tab2 = st.tabs(["Reislocaties", "Restaurants"])
 
-    # TAB 1 - REIZEN
     with tab1:
-        data = load_data_from_gsheets()
+        data = load_travel_data()
         if data.empty:
             st.stop()
 
@@ -262,8 +221,8 @@ def main():
             accommodatie_options = sorted(data['accommodatie'].dropna().unique())
             accommodatie = st.multiselect('Welke type accommodatie wil je?', accommodatie_options)
             vervoersmiddelen = st.multiselect('Vervoersmiddel', vervoersmiddelen_options)
-
-        filtered_data = filter_data(data, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie, temp_slider, vervoersmiddelen)
+        
+        filtered_data = filter_travel(data, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie, temp_slider, vervoersmiddelen)
         st.write("### Geselecteerde locaties:")
         if not filtered_data.empty:
             for _, row in filtered_data.iterrows():
@@ -271,9 +230,8 @@ def main():
         else:
             st.write("Geen locaties gevonden.")
 
-    # TAB 2 - RESTAURANTS
     with tab2:
-        restaurants = load_restaurants_from_gsheets()
+        restaurants = load_restaurants_data()
         if restaurants.empty:
             st.stop()
 
@@ -289,7 +247,6 @@ def main():
                 restaurant_kaartje(row)
         else:
             st.write("Geen restaurants gevonden.")
-
 
 if __name__ == "__main__":
     main()
