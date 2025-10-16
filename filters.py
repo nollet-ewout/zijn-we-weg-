@@ -1,3 +1,5 @@
+import pandas as pd
+
 # --- Filtering functies ---
 def filter_travel_in_memory(df, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie, temp_slider, vervoersmiddelen):
     df = df.dropna(subset=['budget', 'minimum duur', 'maximum duur'])
