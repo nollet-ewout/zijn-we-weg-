@@ -1,3 +1,6 @@
+from fpdf import FPDF
+import io
+
 # --- PDF export functie ---
 def create_pdf_from_weekplanning(weekplanning):
     pdf = FPDF()
