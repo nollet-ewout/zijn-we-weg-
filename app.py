@@ -178,6 +178,7 @@ def restaurant_kaartje(row):
 
 # --- Plan je dag tab ---
 def plan_je_dag_tab(reizen_df, restaurants_df):
+    st.header("Plan je ideale dag")
 
     locaties = sorted(reizen_df['land / regio'].dropna().unique())
     gekozen_locatie = st.selectbox("Kies je bestemming", locaties)
@@ -185,12 +186,24 @@ def plan_je_dag_tab(reizen_df, restaurants_df):
     if gekozen_locatie:
         st.markdown(f"### Restaurants in of vlakbij {gekozen_locatie}")
 
-        # Eenvoudig filter: locaties die de gekozen locatie als substring bevatten (case-insensitive)
         restaurants_locatie = restaurants_df[restaurants_df['locatie'].str.contains(gekozen_locatie, case=False, na=False)]
 
-        ontbijt_restaurants = st.multiselect("Ontbijt restaurants", restaurants_locatie['naam'].tolist())
-        lunch_restaurants = st.multiselect("Lunch restaurants", restaurants_locatie['naam'].tolist())
-        diner_restaurants = st.multiselect("Diner restaurants", restaurants_locatie['naam'].tolist())
+        # Filter restaurants per maaltijd
+        ontbijt_restaurants = restaurants_locatie[
+            restaurants_locatie['maaltijd'].str.contains("ontbijt", case=False, na=False)
+        ]['naam'].tolist()
+
+        lunch_restaurants = restaurants_locatie[
+            restaurants_locatie['maaltijd'].str.contains("lunch", case=False, na=False)
+        ]['naam'].tolist()
+
+        diner_restaurants = restaurants_locatie[
+            restaurants_locatie['maaltijd'].str.contains("diner", case=False, na=False)
+        ]['naam'].tolist()
+
+        ontbijt_selectie = st.multiselect("Ontbijt restaurants", ontbijt_restaurants)
+        lunch_selectie = st.multiselect("Lunch restaurants", lunch_restaurants)
+        diner_selectie = st.multiselect("Diner restaurants", diner_restaurants)
 
         st.markdown("## Jouw dagplanning:")
         st.markdown(f"### Bestemming: {gekozen_locatie}")
@@ -203,9 +216,9 @@ def plan_je_dag_tab(reizen_df, restaurants_df):
             else:
                 st.markdown(f"Geen {maaltijd} restaurant geselecteerd.")
 
-        toon_restaurants(ontbijt_restaurants, "ontbijt")
-        toon_restaurants(lunch_restaurants, "lunch")
-        toon_restaurants(diner_restaurants, "diner")
+        toon_restaurants(ontbijt_selectie, "ontbijt")
+        toon_restaurants(lunch_selectie, "lunch")
+        toon_restaurants(diner_selectie, "diner")
 
 def main():
     if 'needs_refresh' not in st.session_state:
@@ -331,4 +344,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
