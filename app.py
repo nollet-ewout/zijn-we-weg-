@@ -182,6 +182,12 @@ def restaurant_kaartje(row):
 def main():
     st.title("Ideale Reislocatie & Restaurant Zoeker")
 
+    # Ververs knop bovenaan sidebar
+    with st.sidebar:
+        if st.button("Ververs data"):
+            load_travel_data.clear()
+            load_restaurants_data.clear()
+
     tab_names = ["Reislocaties", "Restaurants"]
     selected_tab = st.sidebar.radio("Selecteer tabblad", tab_names)
 
