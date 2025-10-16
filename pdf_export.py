@@ -1,10 +1,12 @@
 from fpdf import FPDF
 import io
+import os
 
 def create_pdf_from_weekplanning(weekplanning):
     pdf = FPDF()
     pdf.add_page()
-    pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)  # Unicode font toevoegen
+    font_path = os.path.join(os.path.dirname(__file__), "fonts", "DejaVuSans.ttf")
+    pdf.add_font("DejaVu", "", font_path, uni=True)  # Gebruik het juiste pad
     pdf.set_font("DejaVu", size=12)
 
     pdf.cell(0, 10, "Weekplanning Reis en Restaurants", ln=True, align="C")
@@ -22,3 +24,4 @@ def create_pdf_from_weekplanning(weekplanning):
 
     pdf_bytes = pdf.output(dest='S')
     return io.BytesIO(pdf_bytes.encode('utf-8'))
+
