@@ -178,7 +178,6 @@ def restaurant_kaartje(row):
 
 # --- Plan je dag tab ---
 def plan_je_dag_tab(reizen_df, restaurants_df):
-    st.header("Plan je ideale dag")
 
     locaties = sorted(reizen_df['land / regio'].dropna().unique())
     gekozen_locatie = st.selectbox("Kies je bestemming", locaties)
@@ -332,3 +331,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
