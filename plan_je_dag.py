@@ -52,11 +52,11 @@ def plan_je_dag_tab(reizen_df, restaurants_df):
                 diner = dag['diner'] or "geen geselecteerd"
                 st.markdown(f"Ontbijt: {ontbijt}  \nLunch: {lunch}  \nDiner: {diner}")
 
-            if st.button("Exporteer weekplanning naar PDF"):
-                pdf_buffer = create_pdf_from_weekplanning(st.session_state['weekplanning'])
-                st.download_button(
-                    label="Download PDF",
-                    data=pdf_buffer,
-                    file_name="weekplanning.pdf",
-                    mime="application/pdf"
-                )
+                if st.session_state['weekplanning']:
+                    pdf_buffer = create_pdf_from_weekplanning(st.session_state['weekplanning'])
+                    st.download_button(
+                        label="Download PDF",
+                        data=pdf_buffer,
+                        file_name="weekplanning.pdf",
+                        mime="application/pdf"
+                    )
