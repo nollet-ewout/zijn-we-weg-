@@ -1,3 +1,5 @@
+import streamlit as st
+
 # --- Plan je dag tab ---
 def plan_je_dag_tab(reizen_df, restaurants_df):
     st.header("Plan je ideale dag")
