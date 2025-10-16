@@ -1,3 +1,7 @@
+import streamlit as st
+import base64
+import requests
+
 # --- Kaartweergaves ---
 def bestemming_kaartje(row):
     foto_url = row.get('foto', '').strip()
