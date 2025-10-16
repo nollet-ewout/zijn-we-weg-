@@ -26,7 +26,7 @@ def get_gsheets_service():
     service = build('sheets', 'v4', credentials=credentials)
     return service
 
-# --- Cached data loading met 10 min TTL ---
+# --- Cached data loading met 10min TTL ---
 @st.cache_data(ttl=600)
 def load_travel_data():
     service = get_gsheets_service()
@@ -87,7 +87,7 @@ def image_to_base64_cached(image_url):
     except Exception:
         return None
 
-# --- Filtering functies blijven ongewijzigd, werkend op ingeladen dataframes ---
+# --- Filtering functies ---
 def filter_travel_in_memory(df, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie, temp_slider, vervoersmiddelen):
     df = df.dropna(subset=['budget', 'minimum duur', 'maximum duur'])
     df = df[
@@ -176,11 +176,43 @@ def restaurant_kaartje(row):
     """
     st.markdown(kaart_html, unsafe_allow_html=True)
 
+# --- Plan je dag tab ---
+def plan_je_dag_tab(reizen_df, restaurants_df):
+    st.header("Plan je ideale dag")
+
+    locaties = sorted(reizen_df['land / regio'].dropna().unique())
+    gekozen_locatie = st.selectbox("Kies je bestemming", locaties)
+
+    if gekozen_locatie:
+        st.markdown(f"### Restaurants in of vlakbij {gekozen_locatie}")
+
+        # Eenvoudig filter: locaties die de gekozen locatie als substring bevatten (case-insensitive)
+        restaurants_locatie = restaurants_df[restaurants_df['locatie'].str.contains(gekozen_locatie, case=False, na=False)]
+
+        ontbijt_restaurants = st.multiselect("Ontbijt restaurants", restaurants_locatie['naam'].tolist())
+        lunch_restaurants = st.multiselect("Lunch restaurants", restaurants_locatie['naam'].tolist())
+        diner_restaurants = st.multiselect("Diner restaurants", restaurants_locatie['naam'].tolist())
+
+        st.markdown("## Jouw dagplanning:")
+        st.markdown(f"### Bestemming: {gekozen_locatie}")
+
+        def toon_restaurants(restaurant_namen, maaltijd):
+            if restaurant_namen:
+                st.markdown(f"**{maaltijd.capitalize()}:**")
+                for naam in restaurant_namen:
+                    st.markdown(f"- {naam}")
+            else:
+                st.markdown(f"Geen {maaltijd} restaurant geselecteerd.")
+
+        toon_restaurants(ontbijt_restaurants, "ontbijt")
+        toon_restaurants(lunch_restaurants, "lunch")
+        toon_restaurants(diner_restaurants, "diner")
+
 def main():
     if 'needs_refresh' not in st.session_state:
         st.session_state['needs_refresh'] = False
 
-    tab_names = ["Reislocaties", "Restaurants"]
+    tab_names = ["Reislocaties", "Restaurants", "Plan je dag"]
     selected_tab = st.sidebar.radio("Selecteer tabblad", tab_names)
 
     titel = "Ideale " + selected_tab + " Zoeker"
@@ -195,8 +227,10 @@ def main():
     with col1:
         if selected_tab == "Reislocaties":
             st.markdown("### Geselecteerde locaties:")
-        else:
+        elif selected_tab == "Restaurants":
             st.markdown("### Geselecteerde restaurants:")
+        else:
+            st.markdown("### Plan je ideale dag:")
 
     with col2:
         st.button("🔄", on_click=on_refresh_click, key="refresh_button")
@@ -266,7 +300,7 @@ def main():
         else:
             st.write("Geen locaties gevonden.")
 
-    else:
+    elif selected_tab == "Restaurants":
         restaurants = load_restaurants_data()
         if restaurants.empty:
             st.warning("Geen restaurantdata beschikbaar.")
@@ -287,6 +321,14 @@ def main():
                 restaurant_kaartje(row)
         else:
             st.write("Geen restaurants gevonden.")
+
+    else:  # Plan je dag tab
+        reizen_df = load_travel_data()
+        restaurants_df = load_restaurants_data()
+        if reizen_df.empty or restaurants_df.empty:
+            st.warning("Data niet beschikbaar om je dag te plannen.")
+            st.stop()
+        plan_je_dag_tab(reizen_df, restaurants_df)
 
 if __name__ == "__main__":
     main()
