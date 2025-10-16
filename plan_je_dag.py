@@ -1,5 +1,7 @@
 import streamlit as st
 
+from pdf_export import create_pdf_from_weekplanning
+
 # --- Plan je dag tab ---
 def plan_je_dag_tab(reizen_df, restaurants_df):
     st.header("Plan je ideale dag")
