@@ -26,7 +26,7 @@ def get_gsheets_service():
     service = build('sheets', 'v4', credentials=credentials)
     return service
 
-# --- Load Travel Data ---
+# --- Cached data loading ---
 @st.cache_data
 def load_travel_data():
     service = get_gsheets_service()
@@ -53,7 +53,6 @@ def load_travel_data():
             df[col] = pd.to_numeric(df[col], errors='coerce')
     return df
 
-# --- Load Restaurants Data ---
 @st.cache_data
 def load_restaurants_data():
     service = get_gsheets_service()
@@ -76,6 +75,18 @@ def load_restaurants_data():
     df = pd.DataFrame(data, columns=cols)
     df.columns = df.columns.str.strip().str.lower()
     return df
+
+# --- Cache image base64 conversions per url ---
+@st.cache_data
+def image_to_base64_cached(image_url):
+    try:
+        response = requests.get(image_url)
+        response.raise_for_status()
+        img_bytes = response.content
+        encoded = base64.b64encode(img_bytes).decode()
+        return f"data:image/jpeg;base64,{encoded}"
+    except Exception:
+        return None
 
 # --- Filtering Travel Data in-memory ---
 def filter_travel_in_memory(df, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie, temp_slider, vervoersmiddelen):
@@ -110,24 +121,13 @@ def filter_restaurants_in_memory(df, keuken, locaties, prijs_range):
         df = df[df['prijs'].apply(lambda p: len(p.strip()) >= prijs_range[0] and len(p.strip()) <= prijs_range[1])]
     return df
 
-# --- Image to Base64 helper ---
-def image_to_base64(image_url):
-    try:
-        response = requests.get(image_url)
-        response.raise_for_status()
-        img_bytes = response.content
-        encoded = base64.b64encode(img_bytes).decode()
-        return f"data:image/jpeg;base64,{encoded}"
-    except Exception:
-        return None
-
 # --- Travel Card ---
 def bestemming_kaartje(row):
     foto_url = row.get('foto', '').strip()
     url = row.get('url', '').strip()
     img_block = ""
     if foto_url:
-        img_b64 = image_to_base64(foto_url)
+        img_b64 = image_to_base64_cached(foto_url)
         if img_b64:
             img_block = f'<img src="{img_b64}" width="200" style="border-radius:8px; float:right; margin-left:30px;" />'
         else:
@@ -157,7 +157,7 @@ def restaurant_kaartje(row):
     url = row.get('url', '').strip()
     img_block = ""
     if foto_url:
-        img_b64 = image_to_base64(foto_url)
+        img_b64 = image_to_base64_cached(foto_url)
         if img_b64:
             img_block = f'<img src="{img_b64}" width="200" style="border-radius:8px; float:right; margin-left:30px;" />'
         else:
@@ -183,7 +183,7 @@ def main():
     tab_names = ["Reislocaties", "Restaurants"]
     selected_tab = st.sidebar.radio("Selecteer tabblad", tab_names)
 
-    # Dynamische titel
+    # Titel dynamisch
     titel = "Ideale " + selected_tab + " Zoeker"
     st.title(titel)
 
