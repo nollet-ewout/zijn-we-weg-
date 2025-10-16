@@ -180,10 +180,11 @@ def restaurant_kaartje(row):
     st.markdown(kaart_html, unsafe_allow_html=True)
 
 def main():
-    st.title("Ideale Reislocatie & Restaurant Zoeker")
-
-    # Ververs knop bovenaan sidebar
-    with st.sidebar:
+    # Maak een horizontale container bovenaan met titel en refresh knop rechts
+    col1, col2 = st.columns([9, 1])
+    with col1:
+        st.title("Ideale Reislocatie & Restaurant Zoeker")
+    with col2:
         if st.button("Ververs data"):
             load_travel_data.clear()
             load_restaurants_data.clear()
