@@ -4,10 +4,12 @@ import io
 def create_pdf_from_weekplanning(weekplanning):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
+    pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)  # Unicode font toevoegen
+    pdf.set_font("DejaVu", size=12)
+
     pdf.cell(0, 10, "Weekplanning Reis en Restaurants", ln=True, align="C")
     pdf.ln(10)
-    
+
     for i, dag in enumerate(weekplanning, 1):
         text = (
             f"Dag {i}: {dag['bestemming']}  \n"
@@ -17,7 +19,6 @@ def create_pdf_from_weekplanning(weekplanning):
         )
         pdf.multi_cell(0, 10, text)
         pdf.ln(5)
-    
-    # Genereer de PDF als bytestring en verpak in BytesIO
-    pdf_bytes = pdf.output(dest='S').encode('latin1')
-    return io.BytesIO(pdf_bytes)
+
+    pdf_bytes = pdf.output(dest='S')
+    return io.BytesIO(pdf_bytes.encode('utf-8'))
