@@ -250,7 +250,7 @@ def main():
             if refresh_clicked:
                 load_travel_data.clear()
                 load_restaurants_data.clear()
-                st.experimental_rerun()
+                st.rerun()
 
         if not filtered_data.empty:
             for _, row in filtered_data.iterrows():
@@ -299,7 +299,7 @@ def main():
             if refresh_clicked:
                 load_travel_data.clear()
                 load_restaurants_data.clear()
-                st.experimental_rerun()
+                st.rerun()
 
         if not filtered_restaurants.empty:
             for _, row in filtered_restaurants.iterrows():
@@ -309,4 +309,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
