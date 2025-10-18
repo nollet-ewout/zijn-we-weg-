@@ -8,39 +8,48 @@ def plan_je_dag_tab(reizen_df, restaurants_df):
     if 'weekplanning' not in st.session_state:
         st.session_state['weekplanning'] = []
 
-    locaties = sorted(reizen_df['land / regio'].dropna().unique())
-    gekozen_locatie = st.selectbox("Kies je bestemming", locaties)
+    # Selectie kolommen apart voor juiste filtering
+    landen = sorted(reizen_df['land'].dropna().unique())
+    gekozen_land = st.selectbox("Kies land", landen)
 
-    if gekozen_locatie:
-        restaurants_locatie = restaurants_df[restaurants_df['locatie'].str.contains(gekozen_locatie, case=False, na=False)]
+    regios = sorted(reizen_df[reizen_df['land'] == gekozen_land]['regio'].dropna().unique())
+    gekozen_regio = st.selectbox("Kies regio", regios)
 
-        if 'maaltijd' in restaurants_locatie.columns:
-            ontbijt_restaurants = restaurants_locatie[
-                restaurants_locatie['maaltijd'].str.contains("ontbijt", case=False, na=False)
-            ]['naam'].tolist()
-            lunch_restaurants = restaurants_locatie[
-                restaurants_locatie['maaltijd'].str.contains("lunch", case=False, na=False)
-            ]['naam'].tolist()
-            diner_restaurants = restaurants_locatie[
-                restaurants_locatie['maaltijd'].str.contains("diner", case=False, na=False)
-            ]['naam'].tolist()
-        else:
-            ontbijt_restaurants = lunch_restaurants = diner_restaurants = []
-            st.warning("De kolom 'maaltijd' ontbreekt in je restaurantgegevens.")
+    steden = sorted(reizen_df[(reizen_df['land'] == gekozen_land) & (reizen_df['regio'] == gekozen_regio)]['stad'].dropna().unique())
+    gekozen_stad = st.selectbox("Kies stad", steden)
 
-        ontbijt_keuze = st.selectbox("Ontbijt restaurant", ["- geen -"] + ontbijt_restaurants)
-        lunch_keuze = st.selectbox("Lunch restaurant", ["- geen -"] + lunch_restaurants)
-        diner_keuze = st.selectbox("Diner restaurant", ["- geen -"] + diner_restaurants)
+    gekozen_locatie = gekozen_stad
 
-        if st.button("Toevoegen aan weekplanning"):
-            dag = {
-                "bestemming": gekozen_locatie,
-                "ontbijt": ontbijt_keuze if ontbijt_keuze != "- geen -" else None,
-                "lunch": lunch_keuze if lunch_keuze != "- geen -" else None,
-                "diner": diner_keuze if diner_keuze != "- geen -" else None
-            }
-            st.session_state['weekplanning'].append(dag)
-            st.success(f"Dag {len(st.session_state['weekplanning'])} toegevoegd!")
+    # Filter restaurants op geselecteerde stad
+    restaurants_locatie = restaurants_df[restaurants_df['stad'].str.contains(gekozen_locatie, case=False, na=False)]
+
+    if 'maaltijd' in restaurants_locatie.columns:
+        ontbijt_restaurants = restaurants_locatie[
+            restaurants_locatie['maaltijd'].str.contains("ontbijt", case=False, na=False)
+        ]['naam'].tolist()
+        lunch_restaurants = restaurants_locatie[
+            restaurants_locatie['maaltijd'].str.contains("lunch", case=False, na=False)
+        ]['naam'].tolist()
+        diner_restaurants = restaurants_locatie[
+            restaurants_locatie['maaltijd'].str.contains("diner", case=False, na=False)
+        ]['naam'].tolist()
+    else:
+        ontbijt_restaurants = lunch_restaurants = diner_restaurants = []
+        st.warning("De kolom 'maaltijd' ontbreekt in je restaurantgegevens.")
+
+    ontbijt_keuze = st.selectbox("Ontbijt restaurant", ["- geen -"] + ontbijt_restaurants)
+    lunch_keuze = st.selectbox("Lunch restaurant", ["- geen -"] + lunch_restaurants)
+    diner_keuze = st.selectbox("Diner restaurant", ["- geen -"] + diner_restaurants)
+
+    if st.button("Toevoegen aan weekplanning"):
+        dag = {
+            "bestemming": gekozen_locatie,
+            "ontbijt": ontbijt_keuze if ontbijt_keuze != "- geen -" else None,
+            "lunch": lunch_keuze if lunch_keuze != "- geen -" else None,
+            "diner": diner_keuze if diner_keuze != "- geen -" else None
+        }
+        st.session_state['weekplanning'].append(dag)
+        st.success(f"Dag {len(st.session_state['weekplanning'])} toegevoegd!")
 
     if st.session_state['weekplanning']:
         st.markdown("## Overzicht weekplanning")
