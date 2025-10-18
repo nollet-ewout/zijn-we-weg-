@@ -136,13 +136,11 @@ def main():
                 restaurants[col] = restaurants[col].fillna('')
 
         keuken_options = sorted([x for x in restaurants['keuken'].unique() if x])
-        locatie_options = sorted([x for x in restaurants['locatie'].unique() if x])
         land_options = sorted([x for x in restaurants['land'].unique() if x])
         regio_options = sorted([x for x in restaurants['regio'].unique() if x])
         stad_options = sorted([x for x in restaurants['stad'].unique() if x])
 
         selected_keuken = st.sidebar.multiselect("Kies type keuken", keuken_options, default=st.session_state.get('filter_keuken', []), key='filter_keuken')
-        selected_locaties = st.sidebar.multiselect("Selecteer locatie(s)", locatie_options, default=st.session_state.get('filter_locaties', []), key='filter_locaties')
         land = st.sidebar.multiselect('Land', land_options, default=st.session_state.get('filter_rest_land', []), key='filter_rest_land')
         regio = st.sidebar.multiselect('Regio', regio_options, default=st.session_state.get('filter_rest_regio', []), key='filter_rest_regio')
         stad = st.sidebar.multiselect('Stad', stad_options, default=st.session_state.get('filter_rest_stad', []), key='filter_rest_stad')
@@ -151,7 +149,6 @@ def main():
         filtered_restaurants = filter_restaurants_in_memory(
             restaurants,
             selected_keuken,
-            selected_locaties,
             prijs_slider,
             land,
             regio,
@@ -174,3 +171,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
