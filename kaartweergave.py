@@ -1,10 +1,8 @@
 import streamlit as st
-import base64
-import requests
-
 from data_loading import image_to_base64_cached
 
 # --- Kaartweergaves ---
+
 def bestemming_kaartje(row):
     foto_url = row.get('foto', '').strip()
     url = row.get('url', '').strip()
@@ -17,8 +15,13 @@ def bestemming_kaartje(row):
             img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right;'></div>"
     else:
         img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right;'></div>"
-    naam_html = f'<a href="{url}" target="_blank" style="color:#1e90ff; text-decoration:none;">{row["land / regio"]}</a>' if url else f'<span style="color:#fff; font-weight:bold;">{row["land / regio"]}</span>'
+
+    locatie_tekst = f"{row.get('land', '')} – {row.get('regio', '')} – {row.get('stad', '')}"
+
+    naam_html = f'<a href="{url}" target="_blank" style="color:#1e90ff; text-decoration:none;">{locatie_tekst}</a>' if url else f'<span style="color:#fff; font-weight:bold;">{locatie_tekst}</span>'
+    
     vervoersmiddel_clean = ', '.join([v.strip() for v in row.get('vervoersmiddel', '').split(';') if v.strip()])
+
     kaart_html = f"""
     <div style='border:1px solid #ddd; border-radius:8px; padding:20px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.2); background-color:#18181b; overflow:auto;'>
         {img_block}
@@ -46,7 +49,11 @@ def restaurant_kaartje(row):
             img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right;'></div>"
     else:
         img_block = "<div style='width:200px; height:150px; background:#444; border-radius:8px; float:right;'></div>"
-    naam_html = f'<a href="{url}" target="_blank" style="color:#1e90ff; text-decoration:none;">{row["naam"]}</a>' if url else f'<span style="color:#fff; font-weight:bold;">{row["naam"]}</span>'
+
+    locatie_tekst = f"{row.get('land', '')} – {row.get('regio', '')} – {row.get('stad', '')}"
+
+    naam_html = f'<a href="{url}" target="_blank" style="color:#1e90ff; text-decoration:none;">{row.get("naam", "")}</a>' if url else f'<span style="color:#fff; font-weight:bold;">{row.get("naam", "")}</span>'
+
     kaart_html = f"""
     <div style='border:1px solid #ddd; border-radius:8px; padding:20px; margin-bottom:15px; box-shadow:2px 2px 8px rgba(0,0,0,0.2); background-color:#18181b; overflow:auto;'>
         {img_block}
@@ -54,7 +61,7 @@ def restaurant_kaartje(row):
             <h3 style='margin-bottom:10px; color:#fff;'>{naam_html}</h3>
             <div style='color:#fff;'><b>Keuken:</b> {row.get('keuken', '')}</div>
             <div style='color:#fff;'><b>Prijs:</b> {row.get('prijs', '')}</div>
-            <div style='color:#fff;'><b>Locatie:</b> {row.get('locatie', '')}</div>
+            <div style='color:#fff;'><b>Locatie:</b> {locatie_tekst}</div>
             <div style='color:#ccc; font-style:italic;'>{row.get('opmerking', '') or ''}</div>
         </div>
     </div>
