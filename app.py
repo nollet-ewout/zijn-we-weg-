@@ -54,7 +54,7 @@ def main():
 
     if st.session_state['needs_refresh']:
         st.session_state['needs_refresh'] = False
-        st.rerun()
+        st.experimental_rerun()
 
     if selected_tab == "Reislocaties":
         data = load_travel_data()
@@ -68,19 +68,27 @@ def main():
         max_budget = int(data['budget'].max())
         min_temp = int(data['temperatuur'].min()) if 'temperatuur' in data.columns else 0
         max_temp = int(data['temperatuur'].max()) if 'temperatuur' in data.columns else 40
-        vervoersmiddelen_options = sorted(set(
-            v.strip()
-            for row in data['vervoersmiddel'].dropna()
-            for v in row.split(';')
-        )) if 'vervoersmiddel' in data.columns else []
+
+        # Nieuwe filters sidebar
+        land_options = sorted(data['land'].dropna().unique())
+        land = st.sidebar.multiselect('Land', land_options)
+
+        regio_options = sorted(data['regio'].dropna().unique())
+        regio = st.sidebar.multiselect('Regio', regio_options)
+
+        stad_options = sorted(data['stad'].dropna().unique())
+        stad = st.sidebar.multiselect('Stad', stad_options)
 
         duur_slider = st.sidebar.slider('Hoe lang wil je weg? (dagen)', min_duur, max_duur, (min_duur, max_duur), step=1)
         budget_slider = st.sidebar.slider('Wat is je budget? (min - max)', min_budget, max_budget, (min_budget, max_budget), step=100)
         temp_slider = st.sidebar.slider('Temperatuurbereik (°C)', min_temp, max_temp, (min_temp, max_temp), step=1)
+
         continent_options = sorted(data['continent'].dropna().unique())
         continent = st.sidebar.multiselect('Op welk continent wil je reizen?', continent_options)
+
         reistype_options = sorted(data['reistype / doel'].dropna().unique())
         reistype = st.sidebar.multiselect('Wat is het doel van je reis?', reistype_options)
+
         seizoen_raw_options = data['seizoen'].dropna().unique()
         seizoen_split = set()
         for item in seizoen_raw_options:
@@ -88,11 +96,19 @@ def main():
                 seizoen_split.add(s.strip())
         seizoen_options = sorted(seizoen_split)
         seizoen = st.sidebar.multiselect('In welk seizoen wil je reizen?', seizoen_options)
+
         accommodatie_options = sorted(data['accommodatie'].dropna().unique())
         accommodatie = st.sidebar.multiselect('Welke type accommodatie wil je?', accommodatie_options)
+
+        vervoersmiddelen_options = sorted(set(
+            v.strip()
+            for row in data['vervoersmiddel'].dropna()
+            for v in row.split(';')
+        )) if 'vervoersmiddel' in data.columns else []
         vervoersmiddelen = st.sidebar.multiselect('Vervoersmiddel', vervoersmiddelen_options)
 
-        filtered_data = filter_travel_in_memory(data, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie, temp_slider, vervoersmiddelen)
+        filtered_data = filter_travel_in_memory(data, duur_slider, budget_slider, continent, reistype, seizoen,
+                                                accommodatie, temp_slider, vervoersmiddelen, land, regio, stad)
 
         if not filtered_data.empty:
             for _, row in filtered_data.iterrows():
@@ -112,9 +128,19 @@ def main():
         locatie_options = sorted(restaurants['locatie'].dropna().unique())
         selected_locaties = st.sidebar.multiselect("Selecteer locatie(s)", locatie_options)
 
+        land_options = sorted(restaurants['land'].dropna().unique())
+        land = st.sidebar.multiselect('Land', land_options)
+
+        regio_options = sorted(restaurants['regio'].dropna().unique())
+        regio = st.sidebar.multiselect('Regio', regio_options)
+
+        stad_options = sorted(restaurants['stad'].dropna().unique())
+        stad = st.sidebar.multiselect('Stad', stad_options)
+
         prijs_slider = st.sidebar.slider("Prijsniveau (€ - €€€€)", 1, 4, (1, 4), step=1)
 
-        filtered_restaurants = filter_restaurants_in_memory(restaurants, selected_keuken, selected_locaties, prijs_slider)
+        filtered_restaurants = filter_restaurants_in_memory(restaurants, selected_keuken, selected_locaties,
+                                                            prijs_slider, land, regio, stad)
 
         if not filtered_restaurants.empty:
             for _, row in filtered_restaurants.iterrows():
@@ -132,6 +158,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
