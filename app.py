@@ -1,5 +1,4 @@
 import streamlit as st
-
 from filters import filter_travel_in_memory, filter_restaurants_in_memory
 from kaartweergave import bestemming_kaartje, restaurant_kaartje
 from data_loading import load_travel_data, load_restaurants_data
@@ -8,7 +7,7 @@ from plan_je_dag import plan_je_dag_tab
 def main():
     if 'needs_refresh' not in st.session_state:
         st.session_state['needs_refresh'] = False
-    
+
     tab_names = ["Reislocaties", "Restaurants", "Plan je dag"]
     selected_tab = st.sidebar.radio("Selecteer tabblad", tab_names)
 
@@ -51,13 +50,18 @@ def main():
 
     if st.session_state['needs_refresh']:
         st.session_state['needs_refresh'] = False
-        st.rerun()
+        st.experimental_rerun()
 
     if selected_tab == "Reislocaties":
         data = load_travel_data()
         if data.empty:
             st.warning("Geen reisdata beschikbaar.")
             st.stop()
+
+        # Vul lege waarden met lege strings
+        for col in ['land', 'regio', 'stad', 'continent', 'reistype / doel', 'seizoen', 'accommodatie', 'vervoersmiddel']:
+            if col in data.columns:
+                data[col] = data[col].fillna('')
 
         min_duur = int(data['minimum duur'].min())
         max_duur = int(data['maximum duur'].max())
@@ -66,18 +70,22 @@ def main():
         min_temp = int(data['temperatuur'].min()) if 'temperatuur' in data.columns else 0
         max_temp = int(data['temperatuur'].max()) if 'temperatuur' in data.columns else 40
 
-        land_options = sorted(data['land'].dropna().unique())
-        regio_options = sorted(data['regio'].dropna().unique())
-        stad_options = sorted(data['stad'].dropna().unique())
-        continent_options = sorted(data['continent'].dropna().unique())
-        reistype_options = sorted(data['reistype / doel'].dropna().unique())
-        seizoen_raw_options = data['seizoen'].dropna().unique()
+        land_options = sorted([x for x in data['land'].unique() if x])
+        regio_options = sorted([x for x in data['regio'].unique() if x])
+        stad_options = sorted([x for x in data['stad'].unique() if x])
+        continent_options = sorted([x for x in data['continent'].unique() if x])
+        reistype_options = sorted([x for x in data['reistype / doel'].unique() if x])
+
+        seizoen_raw_options = data['seizoen'].unique()
         seizoen_split = set()
         for item in seizoen_raw_options:
-            for s in item.split(';'):
-                seizoen_split.add(s.strip())
+            for s in str(item).split(';'):
+                s = s.strip()
+                if s:
+                    seizoen_split.add(s)
         seizoen_options = sorted(seizoen_split)
-        accommodatie_options = sorted(data['accommodatie'].dropna().unique())
+
+        accommodatie_options = sorted([x for x in data['accommodatie'].unique() if x])
         vervoersmiddelen_options = sorted(set(
             v.strip()
             for row in data['vervoersmiddel'].dropna()
@@ -111,7 +119,6 @@ def main():
             regio,
             stad
         )
-
         if not filtered_data.empty:
             for _, row in filtered_data.iterrows():
                 bestemming_kaartje(row)
@@ -124,11 +131,15 @@ def main():
             st.warning("Geen restaurantdata beschikbaar.")
             st.stop()
 
-        keuken_options = sorted(restaurants['keuken'].dropna().unique())
-        locatie_options = sorted(restaurants['locatie'].dropna().unique())
-        land_options = sorted(restaurants['land'].dropna().unique())
-        regio_options = sorted(restaurants['regio'].dropna().unique())
-        stad_options = sorted(restaurants['stad'].dropna().unique())
+        for col in ['land', 'regio', 'stad', 'keuken', 'locatie', 'maaltijd']:
+            if col in restaurants.columns:
+                restaurants[col] = restaurants[col].fillna('')
+
+        keuken_options = sorted([x for x in restaurants['keuken'].unique() if x])
+        locatie_options = sorted([x for x in restaurants['locatie'].unique() if x])
+        land_options = sorted([x for x in restaurants['land'].unique() if x])
+        regio_options = sorted([x for x in restaurants['regio'].unique() if x])
+        stad_options = sorted([x for x in restaurants['stad'].unique() if x])
 
         selected_keuken = st.sidebar.multiselect("Kies type keuken", keuken_options, default=st.session_state.get('filter_keuken', []), key='filter_keuken')
         selected_locaties = st.sidebar.multiselect("Selecteer locatie(s)", locatie_options, default=st.session_state.get('filter_locaties', []), key='filter_locaties')
@@ -163,4 +174,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
