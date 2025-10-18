@@ -50,7 +50,7 @@ def main():
 
     if st.session_state['needs_refresh']:
         st.session_state['needs_refresh'] = False
-        st.experimental_rerun()
+        st.rerun()
 
     if selected_tab == "Reislocaties":
         data = load_travel_data()
@@ -171,4 +171,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
