@@ -42,8 +42,8 @@ def filter_restaurants_in_memory(df, keuken, prijs_slider, land, regio, stad):
             df[col] = df[col].fillna('')
 
     filtered = df[
-        (df['prijsniveau'] >= prijs_slider[0]) &
-        (df['prijsniveau'] <= prijs_slider[1])
+        (df['prijs'] >= prijs_slider[0]) &
+        (df['prijs'] <= prijs_slider[1])
     ]
 
     if keuken:
