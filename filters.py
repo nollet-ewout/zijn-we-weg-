@@ -2,6 +2,11 @@ import pandas as pd
 
 # --- Filtering functies ---
 def filter_travel_in_memory(df, duur_slider, budget_slider, continent, reistype, seizoen, accommodatie, temp_slider, vervoersmiddelen, land, regio, stad):
+    # Vul lege velden
+    for col in ['land', 'regio', 'stad', 'continent', 'reistype / doel', 'seizoen', 'accommodatie', 'vervoersmiddel']:
+        if col in df.columns:
+            df[col] = df[col].fillna('')
+
     filtered = df[
         (df['minimum duur'] >= duur_slider[0]) &
         (df['maximum duur'] <= duur_slider[1]) &
@@ -31,6 +36,11 @@ def filter_travel_in_memory(df, duur_slider, budget_slider, continent, reistype,
 
 
 def filter_restaurants_in_memory(df, keuken, locaties, prijs_slider, land, regio, stad):
+    # Vul lege velden
+    for col in ['land', 'regio', 'stad', 'keuken', 'locatie']:
+        if col in df.columns:
+            df[col] = df[col].fillna('')
+
     filtered = df[
         (df['prijsniveau'] >= prijs_slider[0]) &
         (df['prijsniveau'] <= prijs_slider[1])
