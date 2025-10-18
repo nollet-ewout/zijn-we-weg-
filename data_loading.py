@@ -40,7 +40,7 @@ def load_restaurants_data():
     spreadsheet_id = st.secrets["spreadsheet_id"]
     sheet = service.spreadsheets()
     try:
-        result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Restaurants!A1:G").execute()
+        result = sheet.values().get(spreadsheetId=spreadsheet_id, range="Restaurants!A1:J").execute()
         values = result.get('values', [])
     except Exception as e:
         st.error(f"Error bij ophalen restaurantdata: {e}")
