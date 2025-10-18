@@ -35,7 +35,7 @@ def filter_travel_in_memory(df, duur_slider, budget_slider, continent, reistype,
     return filtered
 
 
-def filter_restaurants_in_memory(df, keuken, locaties, prijs_slider, land, regio, stad):
+def filter_restaurants_in_memory(df, keuken, prijs_slider, land, regio, stad):
     # Vul lege velden
     for col in ['land', 'regio', 'stad', 'keuken', 'locatie']:
         if col in df.columns:
@@ -48,8 +48,6 @@ def filter_restaurants_in_memory(df, keuken, locaties, prijs_slider, land, regio
 
     if keuken:
         filtered = filtered[filtered['keuken'].isin(keuken)]
-    if locaties:
-        filtered = filtered[filtered['locatie'].isin(locaties)]
     if land:
         filtered = filtered[filtered['land'].isin(land)]
     if regio:
