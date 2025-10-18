@@ -1,26 +1,30 @@
 import streamlit as st
 from pdf_export import create_pdf_from_weekplanning
 
-# --- Plan je dag tab ---
 def plan_je_dag_tab(reizen_df, restaurants_df):
     st.header("Plan je ideale dag")
 
     if 'weekplanning' not in st.session_state:
         st.session_state['weekplanning'] = []
 
-    # Selectie kolommen apart voor juiste filtering
-    landen = sorted(reizen_df['land'].dropna().unique())
+    # Vul lege velden met '' om fouten te voorkomen
+    reizen_df['land'] = reizen_df['land'].fillna('')
+    reizen_df['regio'] = reizen_df['regio'].fillna('')
+    reizen_df['stad'] = reizen_df['stad'].fillna('')
+
+    # Filter lege locaties eruit voor selectie
+    landen = sorted([l for l in reizen_df['land'].unique() if l])
     gekozen_land = st.selectbox("Kies land", landen)
 
-    regios = sorted(reizen_df[reizen_df['land'] == gekozen_land]['regio'].dropna().unique())
+    regios = sorted([r for r in reizen_df[reizen_df['land'] == gekozen_land]['regio'].unique() if r])
     gekozen_regio = st.selectbox("Kies regio", regios)
 
-    steden = sorted(reizen_df[(reizen_df['land'] == gekozen_land) & (reizen_df['regio'] == gekozen_regio)]['stad'].dropna().unique())
+    steden = sorted([s for s in reizen_df[(reizen_df['land'] == gekozen_land) & (reizen_df['regio'] == gekozen_regio)]['stad'].unique() if s])
     gekozen_stad = st.selectbox("Kies stad", steden)
 
     gekozen_locatie = gekozen_stad
 
-    # Filter restaurants op geselecteerde stad
+    restaurants_df['stad'] = restaurants_df['stad'].fillna('')
     restaurants_locatie = restaurants_df[restaurants_df['stad'].str.contains(gekozen_locatie, case=False, na=False)]
 
     if 'maaltijd' in restaurants_locatie.columns:
