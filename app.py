@@ -50,7 +50,7 @@ def main():
 
     if st.session_state['needs_refresh']:
         st.session_state['needs_refresh'] = False
-        st.rerun()
+        st.experimental_rerun()
 
     if selected_tab == "Reislocaties":
         data = load_travel_data()
@@ -58,7 +58,7 @@ def main():
             st.warning("Geen reisdata beschikbaar.")
             st.stop()
 
-        # Vul lege waarden met lege strings
+        # Vul lege velden
         for col in ['land', 'regio', 'stad', 'continent', 'reistype / doel', 'seizoen', 'accommodatie', 'vervoersmiddel']:
             if col in data.columns:
                 data[col] = data[col].fillna('')
@@ -131,7 +131,8 @@ def main():
             st.warning("Geen restaurantdata beschikbaar.")
             st.stop()
 
-        for col in ['land', 'regio', 'stad', 'keuken', 'locatie', 'maaltijd']:
+        # Vul lege velden
+        for col in ['land', 'regio', 'stad', 'keuken', 'maaltijd']:
             if col in restaurants.columns:
                 restaurants[col] = restaurants[col].fillna('')
 
@@ -171,5 +172,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
