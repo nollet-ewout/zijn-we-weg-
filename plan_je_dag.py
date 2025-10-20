@@ -1,18 +1,21 @@
 import streamlit as st
 from pdf_export import create_pdf_from_weekplanning
 
+# --- Plan je dag tab ---
 def plan_je_dag_tab(reizen_df, restaurants_df):
     st.header("Plan je ideale dag")
 
     if 'weekplanning' not in st.session_state:
         st.session_state['weekplanning'] = []
 
-    # Vul lege velden met '' om fouten te voorkomen
-    reizen_df['land'] = reizen_df['land'].fillna('')
-    reizen_df['regio'] = reizen_df['regio'].fillna('')
-    reizen_df['stad'] = reizen_df['stad'].fillna('')
+    # Vul lege velden met lege strings voor veiligheid
+    for col in ['land', 'regio', 'stad']:
+        if col in reizen_df.columns:
+            reizen_df[col] = reizen_df[col].fillna('')
+    for col in ['land', 'regio', 'stad', 'keuken', 'maaltijd']:
+        if col in restaurants_df.columns:
+            restaurants_df[col] = restaurants_df[col].fillna('')
 
-    # Filter lege locaties eruit voor selectie
     landen = sorted([l for l in reizen_df['land'].unique() if l])
     gekozen_land = st.selectbox("Kies land", landen)
 
@@ -22,10 +25,12 @@ def plan_je_dag_tab(reizen_df, restaurants_df):
     steden = sorted([s for s in reizen_df[(reizen_df['land'] == gekozen_land) & (reizen_df['regio'] == gekozen_regio)]['stad'].unique() if s])
     gekozen_stad = st.selectbox("Kies stad", steden)
 
-    gekozen_locatie = gekozen_stad
+    gekozen_locatie = str(gekozen_stad) if gekozen_stad is not None else ""
 
-    restaurants_df['stad'] = restaurants_df['stad'].fillna('')
-    restaurants_locatie = restaurants_df[restaurants_df['stad'].str.contains(gekozen_locatie, case=False, na=False)]
+    # Filter restaurants op geselecteerde stad, veilig met regex=False
+    restaurants_locatie = restaurants_df[
+        restaurants_df['stad'].str.contains(gekozen_locatie, case=False, na=False, regex=False)
+    ]
 
     if 'maaltijd' in restaurants_locatie.columns:
         ontbijt_restaurants = restaurants_locatie[
