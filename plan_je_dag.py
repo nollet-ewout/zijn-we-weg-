@@ -8,7 +8,7 @@ def plan_je_dag_tab(reizen_df, restaurants_df):
     if 'weekplanning' not in st.session_state:
         st.session_state['weekplanning'] = []
 
-    # Vul lege velden met lege strings voor veiligheid
+    # Vul lege waarden op voor data-betrouwbaarheid
     for col in ['land', 'regio', 'stad']:
         if col in reizen_df.columns:
             reizen_df[col] = reizen_df[col].fillna('')
@@ -22,15 +22,22 @@ def plan_je_dag_tab(reizen_df, restaurants_df):
     regios = sorted([r for r in reizen_df[reizen_df['land'] == gekozen_land]['regio'].unique() if r])
     gekozen_regio = st.selectbox("Kies regio", regios)
 
-    steden = sorted([s for s in reizen_df[(reizen_df['land'] == gekozen_land) & (reizen_df['regio'] == gekozen_regio)]['stad'].unique() if s])
+    # Altijd een lege default-optie toevoegen
+    steden = sorted([s for s in reizen_df[
+        (reizen_df['land'] == gekozen_land) & (reizen_df['regio'] == gekozen_regio)
+    ]['stad'].unique() if s])
+    steden = [""] + steden
     gekozen_stad = st.selectbox("Kies stad", steden)
 
-    gekozen_locatie = str(gekozen_stad) if gekozen_stad is not None else ""
+    gekozen_locatie = gekozen_stad if isinstance(gekozen_stad, str) else ""
 
-    # Filter restaurants op geselecteerde stad, veilig met regex=False
-    restaurants_locatie = restaurants_df[
-        restaurants_df['stad'].str.contains(gekozen_locatie, case=False, na=False, regex=False)
-    ]
+    # Als er een stad gekozen is, filter; anders alles tonen
+    if gekozen_locatie:
+        restaurants_locatie = restaurants_df[
+            restaurants_df['stad'].str.contains(gekozen_locatie, case=False, na=False, regex=False)
+        ]
+    else:
+        restaurants_locatie = restaurants_df.copy()
 
     if 'maaltijd' in restaurants_locatie.columns:
         ontbijt_restaurants = restaurants_locatie[
