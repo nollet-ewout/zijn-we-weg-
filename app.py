@@ -11,9 +11,9 @@ def main():
     tab_names = ["Reislocaties", "Restaurants", "Plan je dag"]
     selected_tab = st.sidebar.radio("Selecteer tabblad", tab_names)
 
-    titel = "Ideale " + selected_tab + " Zoeker"
-    st.title(titel)
+    st.title(f"Ideale {selected_tab} Zoeker")
 
+    # Refresh knop
     def on_refresh_click():
         load_travel_data.clear()
         load_restaurants_data.clear()
@@ -30,35 +30,17 @@ def main():
 
     with col2:
         st.button("🔄", on_click=on_refresh_click, key="refresh_button")
-        st.markdown("""
-        <style>
-        button[kind=primary] > div[role=button] {
-            font-size: 24px;
-            background-color: transparent;
-            border: none;
-            padding: 0;
-            margin-left: auto;
-            cursor: pointer;
-        }
-        button[kind=primary]:hover > div[role=button] {
-            color: #1e90ff;
-            transform: rotate(90deg);
-            transition: transform 0.3s ease-in-out;
-        }
-        </style>
-        """, unsafe_allow_html=True)
 
     if st.session_state['needs_refresh']:
         st.session_state['needs_refresh'] = False
-        st.rerun()
+        st.experimental_rerun()
 
     if selected_tab == "Reislocaties":
         data = load_travel_data()
         if data.empty:
             st.warning("Geen reisdata beschikbaar.")
             st.stop()
-
-        # Vul lege velden
+        # Vul relevante kolommen met lege string
         for col in ['land', 'regio', 'stad', 'continent', 'reistype / doel', 'seizoen', 'accommodatie', 'vervoersmiddel']:
             if col in data.columns:
                 data[col] = data[col].fillna('')
@@ -92,18 +74,18 @@ def main():
             for v in row.split(';')
         )) if 'vervoersmiddel' in data.columns else []
 
-        land = st.sidebar.multiselect('Land', land_options, default=st.session_state.get('filter_land', []), key='filter_land')
-        regio = st.sidebar.multiselect('Regio', regio_options, default=st.session_state.get('filter_regio', []), key='filter_regio')
-        stad = st.sidebar.multiselect('Stad', stad_options, default=st.session_state.get('filter_stad', []), key='filter_stad')
-        continent = st.sidebar.multiselect('Op welk continent wil je reizen?', continent_options, default=st.session_state.get('filter_continent', []), key='filter_continent')
-        reistype = st.sidebar.multiselect('Wat is het doel van je reis?', reistype_options, default=st.session_state.get('filter_reistype', []), key='filter_reistype')
-        seizoen = st.sidebar.multiselect('In welk seizoen wil je reizen?', seizoen_options, default=st.session_state.get('filter_seizoen', []), key='filter_seizoen')
-        accommodatie = st.sidebar.multiselect('Welke type accommodatie wil je?', accommodatie_options, default=st.session_state.get('filter_accommodatie', []), key='filter_accommodatie')
-        vervoersmiddelen = st.sidebar.multiselect('Vervoersmiddel', vervoersmiddelen_options, default=st.session_state.get('filter_vervoersmiddel', []), key='filter_vervoersmiddel')
+        land = st.sidebar.multiselect('Land', land_options, key='filter_land')
+        regio = st.sidebar.multiselect('Regio', regio_options, key='filter_regio')
+        stad = st.sidebar.multiselect('Stad', stad_options, key='filter_stad')
+        continent = st.sidebar.multiselect('Op welk continent?', continent_options, key='filter_continent')
+        reistype = st.sidebar.multiselect('Reistype', reistype_options, key='filter_reistype')
+        seizoen = st.sidebar.multiselect('Seizoen', seizoen_options, key='filter_seizoen')
+        accommodatie = st.sidebar.multiselect('Accommodatie', accommodatie_options, key='filter_accommodatie')
+        vervoersmiddelen = st.sidebar.multiselect('Vervoersmiddel', vervoersmiddelen_options, key='filter_vervoersmiddel')
 
-        duur_slider = st.sidebar.slider('Hoe lang wil je weg? (dagen)', min_duur, max_duur, (min_duur, max_duur), step=1, key='filter_duur')
-        budget_slider = st.sidebar.slider('Wat is je budget? (min - max)', min_budget, max_budget, (min_budget, max_budget), step=100, key='filter_budget')
-        temp_slider = st.sidebar.slider('Temperatuurbereik (°C)', min_temp, max_temp, (min_temp, max_temp), step=1, key='filter_temp')
+        duur_slider = st.sidebar.slider('Duur (dagen)', min_duur, max_duur, (min_duur, max_duur), step=1)
+        budget_slider = st.sidebar.slider('Budget', min_budget, max_budget, (min_budget, max_budget), step=100)
+        temp_slider = st.sidebar.slider('Temperatuur (°C)', min_temp, max_temp, (min_temp, max_temp), step=1)
 
         filtered_data = filter_travel_in_memory(
             data,
@@ -126,34 +108,33 @@ def main():
             st.write("Geen locaties gevonden.")
 
     elif selected_tab == "Restaurants":
-        restaurants = load_restaurants_data()
-        if restaurants.empty:
+        restaurants_df = load_restaurants_data()
+        if restaurants_df.empty:
             st.warning("Geen restaurantdata beschikbaar.")
             st.stop()
+        # Vul alle relevante kolommen op met lege strings
+        for col in ['land', 'regio', 'stad', 'keuken', 'maaltijd', 'prijs']:
+            if col in restaurants_df.columns:
+                restaurants_df[col] = restaurants_df[col].fillna('')
 
-        # Vul lege velden
-        for col in ['land', 'regio', 'stad', 'keuken', 'maaltijd']:
-            if col in restaurants.columns:
-                restaurants[col] = restaurants[col].fillna('')
+        keuken_options = sorted([k for k in restaurants_df['keuken'].unique() if k])
+        land_options = sorted([l for l in restaurants_df['land'].unique() if l])
+        regio_options = sorted([r for r in restaurants_df['regio'].unique() if r])
+        stad_options = sorted([s for s in restaurants_df['stad'].unique() if s])
 
-        keuken_options = sorted([x for x in restaurants['keuken'].unique() if x])
-        land_options = sorted([x for x in restaurants['land'].unique() if x])
-        regio_options = sorted([x for x in restaurants['regio'].unique() if x])
-        stad_options = sorted([x for x in restaurants['stad'].unique() if x])
-
-        selected_keuken = st.sidebar.multiselect("Kies type keuken", keuken_options, default=st.session_state.get('filter_keuken', []), key='filter_keuken')
-        land = st.sidebar.multiselect('Land', land_options, default=st.session_state.get('filter_rest_land', []), key='filter_rest_land')
-        regio = st.sidebar.multiselect('Regio', regio_options, default=st.session_state.get('filter_rest_regio', []), key='filter_rest_regio')
-        stad = st.sidebar.multiselect('Stad', stad_options, default=st.session_state.get('filter_rest_stad', []), key='filter_rest_stad')
-        prijs_slider = st.sidebar.slider("Prijsniveau (€ - €€€€)", 1, 4, (1, 4), step=1, key='filter_prijs')
+        selected_keuken = st.sidebar.multiselect("Kies type keuken", keuken_options)
+        selected_land = st.sidebar.multiselect("Land", land_options)
+        selected_regio = st.sidebar.multiselect("Regio", regio_options)
+        selected_stad = st.sidebar.multiselect("Stad", stad_options)
+        prijs_slider = st.sidebar.slider("Prijsniveau (€ - €€€€)", 1, 4, (1, 4), step=1)
 
         filtered_restaurants = filter_restaurants_in_memory(
-            restaurants,
+            restaurants_df,
             selected_keuken,
             prijs_slider,
-            land,
-            regio,
-            stad
+            selected_land,
+            selected_regio,
+            selected_stad
         )
 
         if not filtered_restaurants.empty:
@@ -166,10 +147,9 @@ def main():
         reizen_df = load_travel_data()
         restaurants_df = load_restaurants_data()
         if reizen_df.empty or restaurants_df.empty:
-            st.warning("Data niet beschikbaar om je dag te plannen.")
+            st.warning("Geen data om je dag te plannen.")
             st.stop()
         plan_je_dag_tab(reizen_df, restaurants_df)
 
 if __name__ == "__main__":
     main()
-
