@@ -37,9 +37,6 @@ def main():
 
     if selected_tab == "Reislocaties":
         data = load_travel_data()
-        st.write(restaurants_df.head())
-        st.write("Kolommen:", restaurants_df.columns.tolist())
-
         if data.empty:
             st.warning("Geen reisdata beschikbaar.")
             st.stop()
@@ -112,6 +109,9 @@ def main():
 
     elif selected_tab == "Restaurants":
         restaurants_df = load_restaurants_data()
+        st.write(restaurants_df.head())
+        st.write("Kolommen:", restaurants_df.columns.tolist())
+
         if restaurants_df.empty:
             st.warning("Geen restaurantdata beschikbaar.")
             st.stop()
@@ -156,5 +156,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
