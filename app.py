@@ -109,8 +109,8 @@ def main():
 
     elif selected_tab == "Restaurants":
         restaurants_df = load_restaurants_data()
-        st.write(restaurants_df.head())
-        st.write("Kolommen:", restaurants_df.columns.tolist())
+        st.write("Alle restaurants:")
+        st.write(restaurants_df)
 
         if restaurants_df.empty:
             st.warning("Geen restaurantdata beschikbaar.")
@@ -156,6 +156,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
